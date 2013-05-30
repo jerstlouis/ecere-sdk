@@ -425,6 +425,7 @@ void ReplaceSpaces(char * output, char * source)
    {
       if(ch == ' ') output[dc++] = '\\';
       if(ch == '\"') output[dc++] = '\\';
+      if(ch == '&') output[dc++] = '\\';
       if(pch != '$')
       {
          if(ch == '(' || ch == ')') output[dc++] = '\\';

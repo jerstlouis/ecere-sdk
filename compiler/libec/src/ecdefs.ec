@@ -93,6 +93,14 @@ public void SetDefines(OldList * list) { defines = list; }
 bool outputLineNumbers = true;
 public void SetOutputLineNumbers(bool value) { outputLineNumbers = value; }
 
+public void FixModuleName(char *moduleName)
+{
+   ChangeCh(moduleName, '.', '_');
+   ChangeCh(moduleName, ' ', '_');
+   ChangeCh(moduleName, '-', '_');
+   ChangeCh(moduleName, '&', '_');
+}
+
 static enum InternalPassArgsState { space, switch_, switchValue, quotedSwitchValue, string, quotedString, end };
 // todo support %var% variables for windows and $var for linux?
 public char * PassArgs(char * output, const char * input)
