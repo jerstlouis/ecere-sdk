@@ -867,6 +867,8 @@ extern int strcasecmp(const char * , const char * );
 
 char * __ecereNameSpace__ecere__sys__MakePathRelative(char * path, char * to, char * destination)
 {
+int len;
+
 if(!path[0])
 memmove(destination, path, strlen(path) + 1);
 else
@@ -898,6 +900,9 @@ __ecereNameSpace__ecere__sys__SplitDirectory(pathRest, pathPart, pathRest);
 __ecereNameSpace__ecere__sys__PathCat(destination, pathPart);
 }
 }
+len = strlen(destination);
+if(len > 1 && (destination[len - 1] == '/' || destination[len - 1] == '\\'))
+destination[--len] = '\0';
 return destination;
 }
 
@@ -1054,73 +1059,81 @@ return ptr1;
 return (((void *)0));
 }
 
-int __ecereNameSpace__ecere__sys__Tokenize(char * string, int maxTokens, char * tokens[], unsigned int escapeBackSlashes)
-{
-int count = 0;
-unsigned int quoted = 0x0;
-unsigned char * start = (((void *)0));
-unsigned int escaped = 0x0;
-char * output = string;
+static struct __ecereNameSpace__ecere__com__Class * __ecereClass___ecereNameSpace__ecere__sys__BackSlashEscaping;
 
-for(; *string && count < maxTokens; string++, output++)
+extern char *  strchr(const char * , int);
+
+int __ecereNameSpace__ecere__sys__Tokenize(char * string, int maxTokens, char * tokens[], unsigned int esc)
 {
-if(output != string)
-*output = *string;
-if(start)
+#ifdef __WIN32__
+const char * escChars = " !\"%&'()+,;=[]^`{}~";
+#else
+const char * escChars = " !\"$&'()*:;<=>?[\\`{|";
+#endif
+int count = 0;
+unsigned int escaped = 0x0;
+unsigned char * token = (((void *)0)), * quoted = (((void *)0)), * o = string, * i = string;
+
+for(; *i && count < maxTokens; o++, i++)
+{
+if(o != i)
+*o = *i;
+if(token)
 {
 if(escaped)
 {
 escaped = 0x0;
-output--;
-if(output != string)
-*output = *string;
+if(*i == '"' && esc == 0x2)
+{
+if(!quoted)
+quoted = i;
+else if(quoted != token)
+quoted = (((void *)0));
 }
-else if(escapeBackSlashes && *string == '\\')
+o--;
+*o = *i;
+}
+else if(*i == '\\' && (esc == 0x1 || (esc == 0x2 && quoted && *(i + 1) == '"') || (esc == 0x2 && !quoted && strchr(escChars, *(i + 1)))))
 escaped = 0x1;
-else if(*string == '\"')
+else if(*i == '"')
 {
-if(quoted)
+if(quoted && quoted == token)
 {
-*output = '\0';
-quoted = 0x0;
+*o = '\0';
+quoted = (((void *)0));
 }
 else
 {
-memmove(start + 1, start, string - (char *)start);
-start++;
+memmove(token + 1, token, i - token);
+token++;
 }
 }
-else if(*string == ' ' && !quoted)
+else if(*i == ' ' && !quoted)
 {
-tokens[count++] = start;
-*output = '\0';
-start = (((void *)0));
+tokens[count++] = token;
+*o = '\0';
+token = (((void *)0));
 }
 }
-else if(*string != ' ')
+else if(*i != ' ')
 {
-if(*string == '\"')
-{
-quoted = 0x1;
-start = output + 1;
-}
+if(*i == '"')
+token = quoted = o + 1;
 else
 {
-start = output;
-if(*string == '\\' && escapeBackSlashes)
+token = o;
+if(*i == '\\' && (esc == 0x1 || (esc == 0x2 && quoted && *(i + 1) == '"') || (esc == 0x2 && !quoted && strchr(escChars, *(i + 1)))))
 escaped = 0x1;
 }
 }
 }
-if(start && count < maxTokens)
+if(token && count < maxTokens)
 {
-tokens[count++] = start;
-*output = '\0';
+tokens[count++] = token;
+*o = '\0';
 }
 return count;
 }
-
-extern char *  strchr(const char * , int);
 
 int __ecereNameSpace__ecere__sys__TokenizeWith(char * string, int maxTokens, char * tokens[], char * tokenizers, unsigned int escapeBackSlashes)
 {

@@ -818,7 +818,98 @@ public char * RSearchString(char * buffer, char * subStr, int maxLen, bool match
    return null;
 }
 
-public int Tokenize(char * string, int maxTokens, char* tokens[], bool escapeBackSlashes)
+//public define gnuMakeCharsNeedEscaping = "$%";
+//public define windowsFileNameCharsNotAllowed = "*/:<>?\\\"|";
+//public define linuxFileNameCharsNotAllowed = "/";
+//public define windowsFileNameCharsNeedEscaping = " !%&'()+,;=[]^`{}~"; // "#$-.@_" are ok
+//public define linuxFileNameCharsNeedEscaping = " !\"$&'()*:;<=>?[\\`{|"; // "#%+,-.@]^_}~" are ok
+
+// fix #139 to remove " = 2" and warnings for backward compatible calls to Tokenize using 'true' for the 'esc' argument;
+public enum BackSlashEscaping : bool { forArgsPassing = 2 };
+public int Tokenize(char * string, int maxTokens, char* tokens[], BackSlashEscaping esc)
+{
+#ifdef __WIN32__
+   const char * escChars = " !\"%&'()+,;=[]^`{}~"; // "#$-.@_" are ok // windowsFileNameCharsNeedEscaping + "\"";
+#else
+   const char * escChars = " !\"$&'()*:;<=>?[\\`{|"; // "#%+,-.@]^_}~" are ok // linuxFileNameCharsNeedEscaping;
+#endif
+   int count = 0;
+   bool escaped = false;
+   char * token = null, * quoted = null, * o = string, * i = string;
+   for(; *i && count<maxTokens; o++, i++)
+   {
+      if(o != i)
+         *o = *i;
+      if(token)
+      {
+         if(escaped)
+         {
+            escaped = false;
+            if(*i == '"' && esc == forArgsPassing)
+            {
+               if(!quoted)
+                  quoted = i;
+               else if(quoted != token)
+                  quoted = null;
+            }
+            o--;
+            *o = *i;
+         }
+         else if(*i == '\\' &&
+               (
+                   esc == true ||
+                  (esc == forArgsPassing && quoted && *(i+1) == '"') ||
+                  (esc == forArgsPassing && !quoted && strchr(escChars, *(i+1)))
+               ))
+            escaped = true;
+         else if(*i == '"')
+         {
+            if(quoted && quoted == token)
+            {
+               *o = '\0';
+               quoted = null;
+            }
+            else
+            {
+               // squashing lonely unescaped quote
+               memmove(token+1, token, i-token);
+               token++;
+            }
+         }
+         else if(*i == ' ' && !quoted)
+         {
+            tokens[count++] = token;
+            *o = '\0';
+            token = null;
+         }
+      }
+      else if(*i != ' ')
+      {
+         if(*i == '"')
+            token = quoted = o+1;
+         else
+         {
+            token = o;
+            if(*i == '\\' &&
+                  (
+                      esc == true ||
+                     (esc == forArgsPassing && quoted && *(i+1) == '"') ||
+                     (esc == forArgsPassing && !quoted && strchr(escChars, *(i+1)))
+                  ))
+               escaped = true;
+         }
+      }
+   }
+   if(token && count < maxTokens)
+   {
+      tokens[count++] = token;
+      *o = '\0';
+   }
+   return count;
+}
+
+#if 0
+public int Tokenize(char * string, int maxTokens, char* tokens[], BackSlashEscaping esc)
 {
    int count = 0;
    bool quoted = false;
@@ -841,7 +932,8 @@ public int Tokenize(char * string, int maxTokens, char* tokens[], bool escapeBac
             if(output != string)
                *output = *string;
          }
-         else if(escapeBackSlashes && *string == '\\')
+         else if(*string == '\\' && (esc == true ||
+               (esc == forArgsPassing && (*(string+1) == '\"' || *(string+1) == ' '))))
             escaped = true;
          else if(*string == '\"')
          {
@@ -873,7 +965,8 @@ public int Tokenize(char * string, int maxTokens, char* tokens[], bool escapeBac
          else
          {
             start = output;
-            if(*string == '\\' && escapeBackSlashes)
+            if(*string == '\\' && (esc == true ||
+                  (esc == forArgsPassing && (*(string+1) == '\"' || *(string+1) == ' '))))
                escaped = true;
          }
       }
@@ -885,6 +978,7 @@ public int Tokenize(char * string, int maxTokens, char* tokens[], bool escapeBac
    }
    return count;
 }
+#endif
 
 public int TokenizeWith(char * string, int maxTokens, char* tokens[], char * tokenizers, bool escapeBackSlashes)
 {

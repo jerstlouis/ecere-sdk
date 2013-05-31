@@ -1,3 +1,11 @@
+#ifdef ECERE_STATIC
+public import static "ecere"
+public import static "ec"
+#else
+public import "ecere"
+public import "ec"
+#endif
+
 import "ide"
 import "process"
 import "debugFindCtx"
@@ -1996,7 +2004,14 @@ class Debugger
                GdbCommand(false, "-inferior-tty-set %s", progFifoPath);
 #endif
 
-               GdbCommand(false, "-gdb-set args %s", ide.workspace.commandLineArgs ? ide.workspace.commandLineArgs : "");
+               {
+                  char * args = ide.workspace.commandLineArgs;
+                  char * buf = new char[strlen(args)*2+1];
+                  if(args)
+                     PassArgs(buf, args);
+                  GdbCommand(false, "-gdb-set args %s", buf);
+                  delete buf;
+               }
                /*
                for(e : ide.workspace.environmentVars)
                {

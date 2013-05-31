@@ -37,7 +37,8 @@ typedef unsigned short uint16;
 typedef unsigned int uint;
 typedef int bool;
 
-int __ecereNameSpace__ecere__sys__Tokenize(char * string, int maxTokens, char * tokens[], unsigned int escapeBackSlashes);
+#define forArgsPassing 2
+int __ecereNameSpace__ecere__sys__Tokenize(char * string, int maxTokens, char * tokens[], unsigned int esc);
 char * __ecereNameSpace__ecere__sys__CopyString(char * string);
 void __ecereNameSpace__ecere__com__eSystem_Delete(void * memory);
 unsigned short * __ecereNameSpace__ecere__sys__UTF8toUTF16(char * source, int * wordCount);
@@ -343,7 +344,13 @@ _DualPipe * _DualPipeOpen(PipeOpenMode mode, char * commandLine, char * env, voi
             close(hInput[PIPE_READ]);
          }
          
-         numTokens = __ecereNameSpace__ecere__sys__Tokenize(commandLineCopy, sizeof(tokens) / sizeof(tokens[0]) - 1, tokens, false);
+#if 0 //#ifdef _DEBUG
+         fprintf(stderr, "\n_DualPipeOpen (in child): %s\n\n", commandLineCopy);
+#endif
+         numTokens = __ecereNameSpace__ecere__sys__Tokenize(commandLineCopy, sizeof(tokens) / sizeof(tokens[0]) - 1, tokens, forArgsPassing);
+#if 0 //#ifdef _DEBUG
+         { int c; for(c=0; c<numTokens; c++) fprintf(stderr, "argv[%d]: %s\n", c, tokens[c]); fprintf(stderr, "\n"); }
+#endif
          tokens[numTokens] = null;
          if(env)
          {

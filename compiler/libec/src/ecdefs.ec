@@ -93,6 +93,205 @@ public void SetDefines(OldList * list) { defines = list; }
 bool outputLineNumbers = true;
 public void SetOutputLineNumbers(bool value) { outputLineNumbers = value; }
 
+static enum InternalPassArgsState { space, switch_, switchValue, quotedSwitchValue, string, quotedString, end };
+// todo support %var% variables for windows and $var for linux?
+public char * PassArgs(char * output, const char * input)
+{
+#ifdef __WIN32__
+//define windowsFileNameCharsNeedEscaping = " !%&'()+,;=[]^`{}~"; // "#$-.@_" are ok
+   const char * escChars = " !\"%&'()+,;=[]^`{}~"; // windowsFileNameCharsNeedEscaping + "\"";
+#else
+//define linuxFileNameCharsNeedEscaping = " !\"$&'()*:;<=>?[\\`{|"; // "#%+,-.@]^_}~" are ok
+   const char * escChars = " !\"$&'()*:;<=>?[\\`{|"; // linuxFileNameCharsNeedEscaping;
+#endif
+   // NOTE: paths that start with a - are not supported!
+   //       need to know the switched that expect an argument
+   //       in order to know if we're expecting a switch or
+   //       an argument and even then...
+   InternalPassArgsState state;
+   bool needDblQuotes;
+   char *l, *o = output, *i = input;
+   if(!*i)
+      state = end;
+   else if(*i == ' ')
+      state = space;
+   else if(*i == '-')
+      state = switch_;
+   else if(*i == '"')
+      state = quotedString;
+   else
+      state = string;
+   while(true)
+   {
+      switch(state)
+      {
+         case quotedString:
+            *o++ = '\\';
+            *o++ = *i++;
+            while(*i && (*i != '"' || *(i-1) == '\\'))
+               *o++ = *i++;
+            *o++ = '\\';
+            *o++ = *i++;
+            state = string;
+            break;
+         case string:
+            l = i;
+            while(*l && !strchr(escChars, *l)/**l != ' '*/)
+               l++;
+            while(*l && *l == ' ')
+               l++;
+            if((needDblQuotes = *l && *l != '-'))
+               *o++ = '"';
+            while(*i)
+            {
+               while(*i && *i != ' ')
+                  *o++ = *i++;
+               l = i;
+               while(*l && *l == ' ')
+                  l++;
+               if(*l && *l != '-')
+               {
+                  while(*i && *i == ' ')
+                     *o++ = *i++;
+               }
+               else
+                  break;
+            }
+            if(needDblQuotes)
+               *o++ = '"';
+            if(!*i)
+               state = end;
+            else
+               state = space;
+            break;
+         case quotedSwitchValue:
+         {
+            bool notEscapedQuoted;
+            if((notEscapedQuoted = *(i-1) != '\\'))
+               *o++ = '\\';
+            *o++ = *i++;
+            while(*i && (*i != '"' || (*(i-1) == '\\' && notEscapedQuoted)))
+               *o++ = *i++;
+            if(notEscapedQuoted)
+               *o++ = '\\';
+            *o++ = *i++;
+            state = switchValue;
+            break;
+         }
+         case switch_:
+            while(*i && *i != ' ' && *i != '=')
+               *o++ = *i++;
+            if(!*i)
+               state = end;
+            else if(*i == '=')
+               state = switchValue;
+            else
+               state = space;
+            break;
+         case switchValue:
+            while(*i && *i != ' ' && *i != '"')
+               *o++ = *i++;
+            if(!*i)
+               state = end;
+            else if(*i == '"')
+               state = quotedSwitchValue;
+            else
+               state = space;
+            break;
+         case space:
+            while(*i == ' ')
+               *o++ = *i++;
+            if(!*i)
+               state = end;
+            else if(*i == '-')
+               state = switch_;
+            else if(*i == '"')
+               state = quotedString;
+            else
+               state = string;
+            break;
+      }
+      if(state == end) break;
+   }
+   *o = '\0';
+   return o;
+}
+
+#if 0
+public char * PassArg(char * output, const char * input)
+{
+#ifdef __WIN32__
+//define windowsFileNameCharsNeedEscaping = " !%&'()+,;=[]^`{}~"; // "#$-.@_" are ok
+   const char * escChars = " !\"%&'()+,;=[]^`{}~"; // windowsFileNameCharsNeedEscaping + "\"";
+#else
+//define linuxFileNameCharsNeedEscaping = " !\"$&'()*:;<=>?[\\`{|"; // "#%+,-.@]^_}~" are ok
+   const char * escChars = " !\"$&'()*:;<=>?[\\`{|"; // linuxFileNameCharsNeedEscaping;
+#endif
+   // NOTE: paths that start with a - are not supported!
+   //       need to know the switched that expect an argument
+   //       in order to know if we're expecting a switch or
+   //       an argument and even then...
+   bool isSwitch = (*input == '-');
+   char ch, *o = output, *i = input;
+   if(isSwitch)
+   {
+      while((ch = *i++) && ch != '=')
+         *o++ = ch;
+      if(ch)
+      {
+         *o++ = ch;
+         while((ch = *i++))
+         {
+            if(strchr(escChars, ch))
+               *o++ = '\\';
+            *o++ = ch;
+         }
+      }
+   }
+   else
+   {
+      bool needDblQuotes;
+      char pch = '\0';
+      while((ch = *i++))
+      {
+         if(/*pch != '\\' && */strchr(escChars, ch))
+         {
+            needDblQuotes = true;
+            break;
+         }
+         pch = ch;
+      }
+      i = input;
+      if(!ch)
+         needDblQuotes = false;
+      if(needDblQuotes)
+         *o++ = '"';
+      while((*o++ = *i++));
+      o--;
+      if(needDblQuotes)
+         *o++ = '"';
+   }
+   *o = '\0';
+   return o;
+}
+#endif
+
+#if 0
+// we esdcape whatever instance.ec is escaping?
+//const char * escChars = "\" "; //"*|:\",<>?\\/&. "
+public void strchrsesc(char * output, char * input, const char * chars)
+{
+   char ch, *o = output, *i = input;
+   while((ch = *i++))
+   {
+      if(strchr(chars, ch))
+         *o++ = '\\';
+      *o++ = ch;
+   }
+   *o = '\0';
+}
+#endif
+
 /*public Module GetPrivateModule()
 {
    return privateModule;

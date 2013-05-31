@@ -1452,7 +1452,7 @@ private:
                strcpy(tempPath, path);
                PathCatSlash(tempPath, name);
             }
-            ReplaceUnwantedMakeChars(modulePath, tempPath);
+            EscapeForMake(modulePath, tempPath, true, true, false);
             sprintf(s, "%s%s%s%s", ts.a, useRes ? "$(RES)" : "", modulePath, ts.b);
             items.Add(CopyString(s));
          }
@@ -1463,8 +1463,8 @@ private:
                   !strcmpi(extension, "m") || !strcmpi(extension, "mm"))
             {
                char modulePath[MAX_LOCATION];
-               ReplaceUnwantedMakeChars(modulePath, path);
-               ReplaceUnwantedMakeChars(moduleName, name);
+               EscapeForMake(modulePath, path, true, true, false);
+               EscapeForMake(moduleName, name, true, true, false);
                sprintf(s, "%s%s%s%s%s", ts.a, modulePath, path[0] ? SEPS : "", moduleName, ts.b);
                items.Add(CopyString(s));
             }
@@ -1474,8 +1474,8 @@ private:
             if(!strcmpi(extension, "ec"))
             {
                char modulePath[MAX_LOCATION];
-               ReplaceUnwantedMakeChars(modulePath, path);
-               ReplaceUnwantedMakeChars(moduleName, name);
+               EscapeForMake(modulePath, path, true, true, false);
+               EscapeForMake(moduleName, name, true, true, false);
                sprintf(s, "%s%s%s%s%s", ts.a, modulePath, path[0] ? SEPS : "", moduleName, ts.b);
                items.Add(CopyString(s));
                count++;
@@ -1486,8 +1486,8 @@ private:
             if(!strcmpi(extension, "rc"))
             {
                char modulePath[MAX_LOCATION];
-               ReplaceUnwantedMakeChars(modulePath, path);
-               ReplaceUnwantedMakeChars(moduleName, name);
+               EscapeForMake(modulePath, path, true, true, false);
+               EscapeForMake(moduleName, name, true, true, false);
                sprintf(s, "%s%s%s%s%s", ts.a, modulePath, path[0] ? SEPS : "", moduleName, ts.b);
                items.Add(CopyString(s));
                count++;
@@ -1502,7 +1502,7 @@ private:
                bool collision;
                NameCollisionInfo info;
                count++;
-               ReplaceUnwantedMakeChars(moduleName, name);
+               EscapeForMake(moduleName, name, true, true, false);
                StripExtension(moduleName);
                info = namesInfo[moduleName];
                collision = info ? info.IsExtensionColliding(extension) : false;
@@ -2129,7 +2129,7 @@ private:
                   strcpy(tempPath, child.path);
                   PathCatSlash(tempPath, child.name);
                }
-               ReplaceUnwantedMakeChars(resPath, tempPath);
+               EscapeForMake(resPath, tempPath, true, true, false);
                if(strchr(tempPath, ' '))
                   quotes = "\"";
                else
@@ -3093,7 +3093,7 @@ static void GenCFlagsFromProjectOptions(ProjectOptions options, bool prjWithEcFi
    }
 
    if(options && options.preprocessorDefinitions)
-      ListOptionToDynamicString("D", options.preprocessorDefinitions, false, lineEach, "\t\t\t", false, s);
+      ListOptionToDynamicString("D", options.preprocessorDefinitions, false, lineEach, "\t\t\t", true, s);
    if(options && options.includeDirs)
       ListOptionToDynamicString("I", options.includeDirs, true, lineEach, "\t\t\t", true, s);
 }

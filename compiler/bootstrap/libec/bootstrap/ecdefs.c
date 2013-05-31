@@ -1165,6 +1165,129 @@ void SetOutputLineNumbers(unsigned int value)
 outputLineNumbers = value;
 }
 
+static struct __ecereNameSpace__ecere__com__Class * __ecereClass_InternalPassArgsState;
+
+extern char *  strchr(const char * , int);
+
+char * PassArgs(char * output, const char * input)
+{
+#ifdef __WIN32__
+const char * escChars = " !\"%&'()+,;=[]^`{}~";
+#else
+const char * escChars = " !\"$&'()*:;<=>?[\\`{|";
+#endif
+int state;
+unsigned int needDblQuotes;
+char * l, * o = output, * i = input;
+
+if(!*i)
+state = 6;
+else if(*i == ' ')
+state = 0;
+else if(*i == '-')
+state = 1;
+else if(*i == '"')
+state = 5;
+else
+state = 4;
+while(0x1)
+{
+switch(state)
+{
+case 5:
+*o++ = '\\';
+*o++ = *i++;
+while(*i && (*i != '"' || *(i - 1) == '\\'))
+*o++ = *i++;
+*o++ = '\\';
+*o++ = *i++;
+state = 4;
+break;
+case 4:
+l = i;
+while(*l && !strchr(escChars, *l))
+l++;
+while(*l && *l == ' ')
+l++;
+if((needDblQuotes = *l && *l != '-'))
+*o++ = '"';
+while(*i)
+{
+while(*i && *i != ' ')
+*o++ = *i++;
+l = i;
+while(*l && *l == ' ')
+l++;
+if(*l && *l != '-')
+{
+while(*i && *i == ' ')
+*o++ = *i++;
+}
+else
+break;
+}
+if(needDblQuotes)
+*o++ = '"';
+if(!*i)
+state = 6;
+else
+state = 0;
+break;
+case 3:
+{
+unsigned int notEscapedQuoted;
+
+if((notEscapedQuoted = *(i - 1) != '\\'))
+*o++ = '\\';
+*o++ = *i++;
+while(*i && (*i != '"' || (*(i - 1) == '\\' && notEscapedQuoted)))
+*o++ = *i++;
+if(notEscapedQuoted)
+*o++ = '\\';
+*o++ = *i++;
+state = 2;
+break;
+}
+case 1:
+while(*i && *i != ' ' && *i != '=')
+*o++ = *i++;
+if(!*i)
+state = 6;
+else if(*i == '=')
+state = 2;
+else
+state = 0;
+break;
+case 2:
+while(*i && *i != ' ' && *i != '"')
+*o++ = *i++;
+if(!*i)
+state = 6;
+else if(*i == '"')
+state = 3;
+else
+state = 0;
+break;
+case 0:
+while(*i == ' ')
+*o++ = *i++;
+if(!*i)
+state = 6;
+else if(*i == '-')
+state = 1;
+else if(*i == '"')
+state = 5;
+else
+state = 4;
+break;
+}
+if(state == 6)
+break;
+}
+*o = '\0';
+return o;
+}
+
 struct GlobalData
 {
 uintptr_t key;
@@ -1896,6 +2019,17 @@ __ecereNameSpace__ecere__com__eSystem_RegisterFunction("SetExcludedSymbols", "vo
 __ecereNameSpace__ecere__com__eSystem_RegisterFunction("SetImports", "void SetImports(ecere::sys::OldList * list)", SetImports, module, 1);
 __ecereNameSpace__ecere__com__eSystem_RegisterFunction("SetDefines", "void SetDefines(ecere::sys::OldList * list)", SetDefines, module, 1);
 __ecereNameSpace__ecere__com__eSystem_RegisterFunction("SetOutputLineNumbers", "void SetOutputLineNumbers(bool value)", SetOutputLineNumbers, module, 1);
+class = __ecereNameSpace__ecere__com__eSystem_RegisterClass(4, "ecdefs_ec}InternalPassArgsState", 0, 0, 0, 0, 0, module, 3, 1);
+if(((struct __ecereNameSpace__ecere__com__Module *)(((char *)module + structSize_Instance)))->application == ((struct __ecereNameSpace__ecere__com__Module *)(((char *)__thisModule + structSize_Instance)))->application && class)
+__ecereClass_InternalPassArgsState = class;
+__ecereNameSpace__ecere__com__eEnum_AddFixedValue(class, "space", 0);
+__ecereNameSpace__ecere__com__eEnum_AddFixedValue(class, "switch_", 1);
+__ecereNameSpace__ecere__com__eEnum_AddFixedValue(class, "switchValue", 2);
+__ecereNameSpace__ecere__com__eEnum_AddFixedValue(class, "quotedSwitchValue", 3);
+__ecereNameSpace__ecere__com__eEnum_AddFixedValue(class, "string", 4);
+__ecereNameSpace__ecere__com__eEnum_AddFixedValue(class, "quotedString", 5);
+__ecereNameSpace__ecere__com__eEnum_AddFixedValue(class, "end", 6);
+__ecereNameSpace__ecere__com__eSystem_RegisterFunction("PassArgs", "char * PassArgs(char * output, const char * input)", PassArgs, module, 1);
 class = __ecereNameSpace__ecere__com__eSystem_RegisterClass(5, "GlobalData", "ecere::sys::BTNode", sizeof(struct GlobalData), 0, 0, 0, module, 1, 1);
 if(((struct __ecereNameSpace__ecere__com__Module *)(((char *)module + structSize_Instance)))->application == ((struct __ecereNameSpace__ecere__com__Module *)(((char *)__thisModule + structSize_Instance)))->application && class)
 __ecereClass_GlobalData = class;

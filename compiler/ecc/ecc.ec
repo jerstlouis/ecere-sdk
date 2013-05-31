@@ -278,6 +278,17 @@ class CompilerApp : Application
          argc++;
       }*/
 
+#ifdef _DEBUG
+      printf("\nArguments given:\n");
+      for(c=1; c<argc; c++)
+         printf(" %s", argv[c]);
+      printf("\n\n");
+      for(c=1; c<argc; c++)
+         PrintLn("Arg", c, ": ", argv[c]);
+      printf("\n");
+      //getch();
+#endif
+
       for(c = 1; c<argc; c++)
       {
          char * arg = argv[c];
@@ -285,42 +296,31 @@ class CompilerApp : Application
          {
             if(!strcmp(arg + 1, "m32") || !strcmp(arg + 1, "m64"))
             {
-               int argLen = strlen(arg);
-               int newLen = cppOptionsLen + 1 + argLen;
+               int newLen = cppOptionsLen + 1 + strlen(arg);
                cppOptions = renew cppOptions char[newLen + 1];
                cppOptions[cppOptionsLen] = ' ';
                strcpy(cppOptions + cppOptionsLen + 1, arg);
                cppOptionsLen = newLen;
                targetBits = !strcmp(arg + 1, "m32") ? 32 : 64;
             }
-            else if(arg[1] == 'D')
+            else if(arg[1] == 'D' || arg[1] == 'I')
             {
-               int argLen = strlen(arg);
-               int newLen = cppOptionsLen + 1 + argLen;
-               cppOptions = renew cppOptions char[newLen + 1];
-               cppOptions[cppOptionsLen] = ' ';
-               strcpy(cppOptions + cppOptionsLen + 1, arg); 
-               cppOptionsLen = newLen;
-               if(!strcmp(arg, "-DBUILDING_ECERE_COM"))
-                  SetBuildingEcereCom(true);
-               else if(!strcmp(arg, "-DECERE_COM_MODULE"))
-                  SetBuildingEcereComModule(true);
-               else if(!strcmp(arg, "-DECERE_BOOTSTRAP"))
-                  buildingBootStrap = true;
-            }
-            else if(arg[1] == 'I')
-            {
-               int argLen = strlen(arg);
-               int newLen = cppOptionsLen + argLen + 3;
-               cppOptions = renew cppOptions char[newLen + 1];
-               cppOptions[cppOptionsLen] = ' ';
-               cppOptions[cppOptionsLen+1] = '-';
-               cppOptions[cppOptionsLen+2] = 'I';
-               cppOptions[cppOptionsLen+3] = '"';
-               strcpy(cppOptions + cppOptionsLen + 4, arg+2); 
-               cppOptions[newLen-1] = '\"';
-               cppOptions[newLen] = '\0';
-               cppOptionsLen = newLen;
+               char * buf;
+               int size = cppOptionsLen + 1 + strlen(arg) * 2 + 1;
+               cppOptions = renew cppOptions char[size];
+               buf = cppOptions + cppOptionsLen;
+               *buf++ = ' ';
+               PassArgs(buf, arg);
+               cppOptionsLen = cppOptionsLen + 1 + strlen(buf);
+               if(arg[1] == 'D')
+               {
+                  if(!strcmp(arg, "-DBUILDING_ECERE_COM"))
+                     SetBuildingEcereCom(true);
+                  else if(!strcmp(arg, "-DECERE_COM_MODULE"))
+                     SetBuildingEcereComModule(true);
+                  else if(!strcmp(arg, "-DECERE_BOOTSTRAP"))
+                     buildingBootStrap = true;
+               }
             }
             else if(!strcmp(arg+1, "t"))
             {
@@ -360,19 +360,16 @@ class CompilerApp : Application
             {
                if(c + 1 < argc)
                {
-                  int argLen = strlen(arg);
-                  int arg1Len = strlen(argv[c+1]);
-                  int newLen = cppOptionsLen + argLen + arg1Len + 4;
-                  cppOptions = renew cppOptions char[newLen + 1];
-                  cppOptions[cppOptionsLen] = ' ';
-                  strcpy(cppOptions + cppOptionsLen + 1, arg); 
-                  cppOptions[cppOptionsLen+argLen+1] = ' ';
-                  cppOptions[cppOptionsLen+argLen+2] = '"';
-                  arg = argv[++c];
-                  strcpy(cppOptions + cppOptionsLen + argLen + 3, arg); 
-                  cppOptions[newLen-1] = '\"';
-                  cppOptions[newLen] = '\0';
-                  cppOptionsLen = newLen;
+                  char * buf;
+                  char * arg1 = argv[++c];
+                  int size = cppOptionsLen + 1 + strlen(arg) * 2 + strlen(arg1) * 2 + 1;
+                  cppOptions = renew cppOptions char[size];
+                  buf = cppOptions + cppOptionsLen;
+                  *buf++ = ' ';
+                  buf = PassArgs(buf, arg);
+                  *buf++ = ' ';
+                  buf = PassArgs(buf, arg1);
+                  cppOptionsLen = buf - cppOptions;
                }
                else
                   valid = false;
@@ -432,11 +429,6 @@ class CompilerApp : Application
       if(!valid)
       {
          printf($"Syntax:\n   ecc [-t <target platform>] [-cpp <c preprocessor>] [-o <output>] [-symbols <outputdir>] [-I<includedir>]* [-isystem <sysincludedir>]* [-D<definition>]* -c <input>\n");
-#ifdef _DEBUG
-         printf($"\nArguments given:");
-         for(c = 1; c<argc; c++)
-            printf(" %s", argv[c]);
-#endif
       }
       else
       {
@@ -484,6 +476,10 @@ class CompilerApp : Application
 
          snprintf(command, sizeof(command), "%s%s -x c -E %s\"%s\"", cppCommand, cppOptions ? cppOptions : "", buildingBootStrap ? "" : "-include stdint.h -include sys/types.h ", GetSourceFile());
          command[sizeof(command)-1] = 0;
+#ifdef _DEBUG
+         PrintLn("ECC Executing:");
+         PrintLn(command);
+#endif
          if((cppOutput = DualPipeOpen({ output = true }, command)))
          {
             char impFile[MAX_LOCATION];
@@ -730,6 +726,7 @@ class CompilerApp : Application
       OutputIntlStrings();
 
 #if defined(_DEBUG) && defined(__WIN32__)
+      PrintLn("Done.");
       if(exitCode || GetNumWarnings())
          getch();
 #endif

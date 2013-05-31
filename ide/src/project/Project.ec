@@ -415,6 +415,7 @@ define stringInFileIncludedFrom = "In file included from ";
 define stringFrom =               "                 from ";
 
 // This function cannot accept same pointer for source and output
+// todo: rename ReplaceSpaces to EscapeSpaceAndSpecialChars or something
 void ReplaceSpaces(char * output, char * source)
 {
    int c, dc;
@@ -423,6 +424,7 @@ void ReplaceSpaces(char * output, char * source)
    for(c = 0, dc = 0; (ch = source[c]); c++, dc++)
    {
       if(ch == ' ') output[dc++] = '\\';
+      if(ch == '\"') output[dc++] = '\\';
       if(pch != '$')
       {
          if(ch == '(' || ch == ')') output[dc++] = '\\';
@@ -435,36 +437,70 @@ void ReplaceSpaces(char * output, char * source)
    output[dc] = '\0';
 }
 
-// This function cannot accept same pointer for source and output
-void ReplaceUnwantedMakeChars(char * output, char * source)
+// NOTES: - this function should get only unescaped unix style paths
+//        - paths with literal $(somestring) in them are not supported
+//          my_$(messed_up)_path would likely become my__path
+void EscapeForMake(char * output, char * input, bool hideSpace, bool allowVars, bool allowDblQuote)
 {
-   char ch;
-   char * s = source, * d = output;
+   char ch, *i = input, *o = output;
    bool inVar = false;
-   while((ch = *s++))
+#ifdef _DEBUG
+   int len = strlen(input);
+   if(len && ((input[0] == '"' && input[len-1] == '"') || strchr(input, '\\') || strchr(input, 127) || (!allowDblQuote && strchr(input, '"'))))
+      PrintLn("Invalid input for EscapeForMake! -- ", input);
+#endif
+   while((ch = *i++))
    {
       if(ch == '(')
       {
-         if(s != source && *(s-1) == '$')
+         if(i-1 != input && *(i-2) == '$' && allowVars)
             inVar = true;
          else
-            *d++ = '\\';
+            *o++ = '\\';
       }
       else if(ch == ')')
       {
-         if(inVar == true)
+         if(inVar == true && allowVars)
             inVar = false;
          else
-            *d++ = '\\';
+            *o++ = '\\';
       }
-      else if(ch == '$' && *(s+1) != '(')
-         *d++ = '$';
+      else if(ch == '$' && *i != '(')
+         *o++ = '$';
+      else if(ch == '&')
+         *o++ = '\\';
+      else if(ch == '"')
+         *o++ = '\\';
       if(ch == ' ')
-         *d++ = 127;
+      {
+         if(hideSpace)
+            *o++ = 127;
+         else
+         {
+            *o++ = '\\';
+            *o++ = ch;
+         }
+      }
       else
-         *d++ = ch;
+         *o++ = ch;
    }
-   *d = '\0';
+   *o = '\0';
+}
+
+void EscapeForMakeToFile(File output, char * input, bool hideSpace, bool allowVars, bool allowDblQuote)
+{
+   char * buf = new char[strlen(input)*2+1];
+   EscapeForMake(buf, input, hideSpace, allowVars, allowDblQuote);
+   output.Print(buf);
+   delete buf;
+}
+
+void EscapeForMakeToDynString(DynamicString output, char * input, bool hideSpace, bool allowVars, bool allowDblQuote)
+{
+   char * buf = new char[strlen(input)*2+1];
+   EscapeForMake(buf, input, hideSpace, allowVars, allowDblQuote);
+   output.concat(buf);
+   delete buf;
 }
 
 static void OutputNoSpace(File f, char * source)
@@ -612,7 +648,7 @@ void OutputListOption(File f, char * option, Array<String> list, ListOutputMetho
 
 void StringNoSpaceToDynamicString(DynamicString s, char * path)
 {
-   char * output = new char[strlen(path)+1024];
+   char * output = new char[strlen(path)*2+1];
    ReplaceSpaces(output, path);
    s.concat(output);
    delete output;
@@ -1628,7 +1664,7 @@ private:
                         precompiling = true;
                      }
                      // Changed escapeBackSlashes here to handle paths with spaces
-                     Tokenize(module, 1, tokens, true); // false);
+                     Tokenize(module, 1, tokens, (BackSlashEscaping)true); // fix #139
                      GetLastDirectory(module, moduleName);
                      ide.outputView.buildBox.Logf("%s\n", moduleName);
                   }
@@ -1658,7 +1694,7 @@ private:
                   if(module)
                   {
                      byte * tokens[1];
-                     Tokenize(module, 1, tokens, true);
+                     Tokenize(module, 1, tokens, (BackSlashEscaping)true); // fix #139
                      GetLastDirectory(module, moduleName);
                      ide.outputView.buildBox.Logf("%s\n", moduleName);
                   }
@@ -2132,7 +2168,24 @@ private:
                         }
                         if(!error && (singleProjectOnlyNode || !found) && strstr(line, "ide ") == line)
                         {
-                           strcpy(command, line);
+                           char ch, pch = '\0';
+                           char *d, *s = strstr(line, " -@ ");
+                           if(s && s != line && !justPrint)
+                           {
+                              s += 3;
+                              *s++ = '\0';
+                              strcpy(command, line);
+                              d = command + strlen(command);
+                              *d++ = ' ';
+                              while((ch = *s++))
+                              {
+                                 if(pch == '\\' && (ch == ' ' || ch == '"')) *d++ = '\\';
+                                 *d++ = ch; pch = ch;
+                              }
+                              *d = '\0';
+                           }
+                           else
+                              strcpy(command, line);
                            found = true;
                         }
                      }
