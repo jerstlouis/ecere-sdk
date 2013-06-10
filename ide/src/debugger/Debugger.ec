@@ -2008,7 +2008,7 @@ class Debugger
                   char * argsLine = CopyString(ide.workspace.commandLineArgs);
                   char * tokens[256];
                   DynamicString s { };
-                  int i, count = Tokenize(argsLine, sizeof(tokens)/sizeof(tokens[0]), tokens, forArgsPassing);
+                  int i, count = argsLine ? Tokenize(argsLine, sizeof(tokens)/sizeof(tokens[0]), tokens, forArgsPassing) : 0;
                   for(i = 0; i < count; i++)
                   {
                      char * arg = tokens[i];
