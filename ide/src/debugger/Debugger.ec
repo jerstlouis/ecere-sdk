@@ -2005,12 +2005,23 @@ class Debugger
 #endif
 
                {
-                  char * args = ide.workspace.commandLineArgs;
-                  char * buf = new char[strlen(args)*2+1];
-                  if(args)
-                     PassArgs(buf, args);
-                  GdbCommand(false, "-gdb-set args %s", buf);
-                  delete buf;
+                  char * argsLine = CopyString(ide.workspace.commandLineArgs);
+                  char * tokens[256];
+                  DynamicString s { };
+                  int i, count = Tokenize(argsLine, sizeof(tokens)/sizeof(tokens[0]), tokens, forArgsPassing);
+                  for(i = 0; i < count; i++)
+                  {
+                     char * arg = tokens[i];
+                     char * buf = new char[strlen(arg) *2+1];
+                     PassArgs(buf, arg);
+                     s.concat(buf);
+                     if(i < count - 1)
+                        s.concat(" ");
+                     delete buf;
+                  }
+                  GdbCommand(false, "-gdb-set args %s", s.array);
+                  delete s;
+                  delete argsLine;
                }
                /*
                for(e : ide.workspace.environmentVars)

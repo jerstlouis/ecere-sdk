@@ -2819,11 +2819,14 @@ class IDEWorkSpace : Window
       char * passDebugWorkDir = null;
       bool openAsText = false;
       DynamicString passArgs { };
+      int ptArg = 0;
+
       for(c = 1; c<app.argc; c++)
       {
          if(passThrough)
          {
-            passArgs.concat(" ");
+            if(ptArg++ > 0)
+               passArgs.concat(" ");
             passArgs.concat(app.argv[c]);
          }
          else if(debugWorkDir)
