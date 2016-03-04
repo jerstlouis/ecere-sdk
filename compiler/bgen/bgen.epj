@@ -1,0 +1,54 @@
+{
+   "Version" : 0.2,
+   "ModuleName" : "bgen",
+   "Options" : {
+      "Warnings" : "All",
+      "TargetType" : "Executable",
+      "TargetFileName" : "bgen",
+      "Libraries" : [
+         "ecere"
+      ],
+      "Console" : true
+   },
+   "Configurations" : [
+      {
+         "Name" : "Debug",
+         "Options" : {
+            "Debug" : true,
+            "Optimization" : "None",
+            "PreprocessorDefinitions" : [
+               "_DEBUG"
+            ],
+            "FastMath" : false
+         }
+      },
+      {
+         "Name" : "Release",
+         "Options" : {
+            "Debug" : false,
+            "Optimization" : "Speed",
+            "FastMath" : true
+         }
+      }
+   ],
+   "Files" : [
+      "bgen.ec",
+      {
+         "FileName" : "out.c",
+         "Options" : {
+            "ExcludeFromBuild" : true
+         }
+      },
+      "eC.h",
+      {
+         "FileName" : "eC.c",
+         "Options" : {
+            "ExcludeFromBuild" : true
+         }
+      }
+   ],
+   "ResourcesPath" : "",
+   "Resources" : [
+
+   ]
+}

@@ -30,7 +30,7 @@ public class SpecsList : ASTList<ASTSpecifier>
 public:
    void printSep()
    {
-      Print(" ");
+      out.Print(" ");
    }
 
    SpecsList ::parse()
@@ -55,10 +55,10 @@ public:
             readToken();
             if(!specs) specs = { };
             specs.Add(SpecBase { specifier = token.type });
-            if(!token.type.isQualifier)
+            if(!token.type.isQualifier && token.type != _typedef)
                gotSpec = true;
          }
-         else if(nextToken.type == identifier)
+         else if(nextToken.type == identifier || nextToken.type == typeName)
          {
             bool isType = false;
             if(isType || !gotSpec)
@@ -99,7 +99,7 @@ public:
 
    void print()
    {
-      if(name) Print(name);
+      if(name) out.Print(name);
    }
 }
 
@@ -148,23 +148,24 @@ public:
    void print()
    {
       type.print();
-      Print(" ");
+      if(type)
+         out.Print(" ");
       if(id) id.print();
       if(baseSpecs)
       {
-         Print(" : ");
+         out.Print(" : ");
          baseSpecs.print();
       }
       if(definitions)
       {
-         PrintLn("");
+         out.PrintLn("");
          printIndent();
-         PrintLn("{");
+         out.PrintLn("{");
          indent++;
          definitions.print();
          indent--;
          printIndent();
-         Print("}");
+         out.Print("}");
       }
    }
 }
