@@ -1,10 +1,9 @@
-// Preprocessor directives can be added at the beginning (Can't store them in AST)
-
 /****************************************************************************
 ===========================================================================
    Core eC Library
 ===========================================================================
 ****************************************************************************/
+
 #if !defined(__EC_H__)
 #define __EC_H__
 
@@ -19,7 +18,6 @@ extern "C"
 #include <stdio.h>
 #include <string.h>
 
-// Syntactic Sugar (NOT GENERATED)
 #define $(x)      (constString)getTranslatedString(MODULE_NAME, x, null)
 #define $$(x, c)  (constString)getTranslatedString(MODULE_NAME, x, c)
 
@@ -80,78 +78,85 @@ extern "C"
       return exitCode; \
    }
 
-// GENERATED:
 
-#define Instance           eC_Instance
-#define Module             eC_Module
-#define Application        eC_Application
-#define Container          eC_Container
-#define Array              eC_Array
-#define CustomAVLTree      eC_CustomAVLTree
-#define AVLTree            eC_AVLTree
-#define Map                eC_Map
-#define LinkList           eC_LinkList
-#define List               eC_List
-#define IOChannel          eC_IOChannel
-#define SerialBuffer       eC_SerialBuffer
-#define OldArray           eC_OldArray
+// Classes
 
-#define Window             eC_Window
-#define DataBox            eC_DataBox
-#define ClassDesignerBase  eC_ClassDesignerBase
-#define DesignerBase       eC_DesignerBase
-
-// Structs / Unions (with methods or properties)
+// unionClass
+// systemClass
+// bitClass
+// unitClass
+// enumClass
+// structClass
+#define BuiltInContainer   eC_BuiltInContainer
 #define Iterator           eC_Iterator
 #define MapIterator        eC_MapIterator
-#define BuiltInContainer   eC_BuiltInContainer
 #define BinaryTree         eC_BinaryTree
-#define StringBinaryTree   eC_StringBinaryTree
 #define OldList            eC_OldList
-
-// class : struct (with methods or properties)
+#define StringBinaryTree   eC_StringBinaryTree
+// noHeadClass
+#define AVLNode            eC_AVLNode
 #define Class              eC_Class
+#define MapNode            eC_MapNode
 #define BTNode             eC_BTNode
 #define Item               eC_Item
 #define OldLink            eC_OldLink
-#define AVLNode            eC_AVLNode
-#define MapNode            eC_MapNode
 #define StringBTNode       eC_StringBTNode
+// normalClass
+#define AVLTree            eC_AVLTree
+#define Application        eC_Application
+#define Array              eC_Array
+#define ClassDesignerBase  eC_ClassDesignerBase
+#define Container          eC_Container
+#define CustomAVLTree      eC_CustomAVLTree
+#define DesignerBase       eC_DesignerBase
+#define IOChannel          eC_IOChannel
+#define Instance           eC_Instance
+#define LinkList           eC_LinkList
+#define List               eC_List
+#define Map                eC_Map
+#define Module             eC_Module
+#define SerialBuffer       eC_SerialBuffer
+#define Window             eC_Window
+// unknown
+#define OldArray           eC_OldArray
+// from ecere
+#define DataBox            eC_DataBox
+
 
 // Defines
+
 #if defined(__cplusplus)
 #define null 0
 #else
 #define null (void *)0
 #endif
 
-// dllimport Functions
-#define eC_initApp               __ecereNameSpace__ecere__com____ecere_COM_Initialize
-#define eC_setArgs               __ecereNameSpace__ecere__com__eSystem_SetArgs
-#define eC_findClass             __ecereNameSpace__ecere__com__eSystem_FindClass
-#define eC_registerClass         __ecereNameSpace__ecere__com__eSystem_RegisterClass
-#define eC_new                   __ecereNameSpace__ecere__com__eSystem_New
-#define eC_new0                  __ecereNameSpace__ecere__com__eSystem_New0
-#define eC_delete                __ecereNameSpace__ecere__com__eSystem_Delete
-#define eC_findFunction          __ecereNameSpace__ecere__com__eSystem_FindFunction
 
+// C Functions
+
+#define eC_initApp               __ecereNameSpace__ecere__com____ecere_COM_Initialize
 #define Class_addMethod          __ecereNameSpace__ecere__com__eClass_AddMethod
 #define Class_findMethod         __ecereNameSpace__ecere__com__eClass_FindMethod
 #define Class_findProperty       __ecereNameSpace__ecere__com__eClass_FindProperty
 #define Class_isDerived          __ecereNameSpace__ecere__com__eClass_IsDerived
-
-#define Module_load              __ecereNameSpace__ecere__com__eModule_Load
-
+#define Instance_decref          __ecereNameSpace__ecere__com__eInstance_DecRef
+#define Instance_delete          __ecereNameSpace__ecere__com__eInstance_Delete
+#define Instance_evolve          __ecereNameSpace__ecere__com__eInstance_Evolve
 #define Instance_new             __ecereNameSpace__ecere__com__eInstance_New
 #define Instance_newEx           __ecereNameSpace__ecere__com__eInstance_NewEx
-#define Instance_delete          __ecereNameSpace__ecere__com__eInstance_Delete
-#define Instance_decref          __ecereNameSpace__ecere__com__eInstance_DecRef
-#define Instance_evolve          __ecereNameSpace__ecere__com__eInstance_Evolve
 #define Instance_setMethod       __ecereNameSpace__ecere__com__eInstance_SetMethod
-
+#define Module_load              __ecereNameSpace__ecere__com__eModule_Load
+#define eC_delete                __ecereNameSpace__ecere__com__eSystem_Delete
+#define eC_findClass             __ecereNameSpace__ecere__com__eSystem_FindClass
+#define eC_findFunction          __ecereNameSpace__ecere__com__eSystem_FindFunction
+#define eC_new                   __ecereNameSpace__ecere__com__eSystem_New
+#define eC_new0                  __ecereNameSpace__ecere__com__eSystem_New0
+#define eC_registerClass         __ecereNameSpace__ecere__com__eSystem_RegisterClass
+#define eC_setArgs               __ecereNameSpace__ecere__com__eSystem_SetArgs
 #define getTranslatedString      __ecereNameSpace__ecere__GetTranslatedString
 #define loadTranslatedStrings    __ecereNameSpace__ecere__LoadTranslatedStrings
 #define unloadTranslatedStrings  __ecereNameSpace__ecere__UnloadTranslatedStrings
+
 
 // Virtual Method Calls
 
@@ -900,34 +905,16 @@ struct class_members_SerialBuffer
 };
 
 // C Exported functions
+// Imports
+
+extern __attribute__((dllimport)) void __ecereNameSpace__ecere__com__MemoryGuard_PopLoc(void);
+extern __attribute__((dllimport)) void __ecereNameSpace__ecere__com__MemoryGuard_PushLoc(const char *loc);
 extern __attribute__((dllimport)) Application __ecereNameSpace__ecere__com____ecere_COM_Initialize(bool guiApp, int argc, char *argv[]);
-
-extern __attribute__((dllimport)) void __ecereNameSpace__ecere__com__eSystem_SetArgs(Application app, int argc, char * argv[]);
-extern __attribute__((dllimport)) Class * __ecereNameSpace__ecere__com__eSystem_FindClass(Module module, const char *name);
-extern __attribute__((dllimport)) Class * __ecereNameSpace__ecere__com__eSystem_RegisterClass(ClassType type, const char *name, const char *baseName, int size, int sizeClass, bool (*Constructor)(void *), void (*Destructor)(void *), Module module, AccessMode declMode, AccessMode inheritanceAccess);
-extern __attribute__((dllimport)) void * __ecereNameSpace__ecere__com__eSystem_New(uint size);
-extern __attribute__((dllimport)) void * __ecereNameSpace__ecere__com__eSystem_New0(uint size);
-extern __attribute__((dllimport)) void *__ecereNameSpace__ecere__com__eSystem_Renew(void *memory, uint size);
-extern __attribute__((dllimport)) void *__ecereNameSpace__ecere__com__eSystem_Renew0(void *memory, uint size);
-extern __attribute__((dllimport)) void __ecereNameSpace__ecere__com__eSystem_Delete(void *memory);
-extern __attribute__((dllimport)) DefinedExpression * __ecereNameSpace__ecere__com__eSystem_FindDefine(Module module, const char *name);
-extern __attribute__((dllimport)) GlobalFunction * __ecereNameSpace__ecere__com__eSystem_FindFunction(Module module, const char *name);
-extern __attribute__((dllimport)) DefinedExpression * __ecereNameSpace__ecere__com__eSystem_RegisterDefine(const char *name, const char *value, Module module, AccessMode declMode);
-extern __attribute__((dllimport)) GlobalFunction * __ecereNameSpace__ecere__com__eSystem_RegisterFunction(const char *name, const char *type, void *func, Module module, AccessMode declMode);
-extern __attribute__((dllimport)) void __ecereNameSpace__ecere__com__eSystem_SetPoolingDisabled(bool disabled);
-
-extern __attribute__((dllimport)) Module __ecereNameSpace__ecere__com__eModule_Load(Module fromModule, const char *name, AccessMode importAccess);
-extern __attribute__((dllimport)) Module __ecereNameSpace__ecere__com__eModule_LoadStatic(Module fromModule, const char *name, AccessMode importAccess, bool __ecereNameSpace__ecere__com__Load(Module module), bool __ecereNameSpace__ecere__com__Unload(Module module));
-extern __attribute__((dllimport)) Module __ecereNameSpace__ecere__com__eModule_LoadStrict(Module fromModule, const char *name, AccessMode importAccess);
-extern __attribute__((dllimport)) void __ecereNameSpace__ecere__com__eModule_Unload(Module fromModule, Module module);
-
-extern __attribute__((dllimport)) Method * __ecereNameSpace__ecere__com__eClass_AddMethod(Class * _class, constString name, constString type, void *function, AccessMode declMode);
-extern __attribute__((dllimport)) Method * __ecereNameSpace__ecere__com__eClass_FindMethod(Class * _class, const char *name, Module module);
-extern __attribute__((dllimport)) Property * __ecereNameSpace__ecere__com__eClass_FindProperty(Class * _class, const char *name, Module module);
 extern __attribute__((dllimport)) BitMember * __ecereNameSpace__ecere__com__eClass_AddBitMember(Class * _class, const char *name, const char *type, int bitSize, int bitPos, AccessMode declMode);
 extern __attribute__((dllimport)) ClassProperty * __ecereNameSpace__ecere__com__eClass_AddClassProperty(Class * _class, const char *name, const char *dataType, void *setStmt, void *getStmt);
 extern __attribute__((dllimport)) DataMember * __ecereNameSpace__ecere__com__eClass_AddDataMember(Class * _class, const char *name, const char *type, uint size, uint alignment, AccessMode declMode);
 extern __attribute__((dllimport)) bool __ecereNameSpace__ecere__com__eClass_AddMember(Class * _class, DataMember * dataMember);
+extern __attribute__((dllimport)) Method * __ecereNameSpace__ecere__com__eClass_AddMethod(Class * _class, constString name, constString type, void *function, AccessMode declMode);
 extern __attribute__((dllimport)) Property * __ecereNameSpace__ecere__com__eClass_AddProperty(Class * _class, const char *name, const char *dataType, void *setStmt, void *getStmt, AccessMode declMode);
 extern __attribute__((dllimport)) ClassTemplateParameter * __ecereNameSpace__ecere__com__eClass_AddTemplateParameter(Class * _class, const char *name, TemplateParameterType type, const void *info, ClassTemplateArgument defaultArg);
 extern __attribute__((dllimport)) Method * __ecereNameSpace__ecere__com__eClass_AddVirtualMethod(Class * _class, const char *name, const char *type, void *function, AccessMode declMode);
@@ -937,47 +924,60 @@ extern __attribute__((dllimport)) ClassProperty * __ecereNameSpace__ecere__com__
 extern __attribute__((dllimport)) DataMember * __ecereNameSpace__ecere__com__eClass_FindDataMember(Class * _class, const char *name, Module module, DataMember * *subMemberStack, int *subMemberStackPos);
 extern __attribute__((dllimport)) DataMember * __ecereNameSpace__ecere__com__eClass_FindDataMemberAndId(Class * _class, const char *name, int *id, Module module, DataMember * *subMemberStack, int *subMemberStackPos);
 extern __attribute__((dllimport)) DataMember * __ecereNameSpace__ecere__com__eClass_FindDataMemberAndOffset(Class * _class, const char *name, uint *offset, Module module, DataMember * *subMemberStack, int *subMemberStackPos);
+extern __attribute__((dllimport)) Method * __ecereNameSpace__ecere__com__eClass_FindMethod(Class * _class, const char *name, Module module);
 extern __attribute__((dllimport)) void __ecereNameSpace__ecere__com__eClass_FindNextMember(Class * _class, Class * curClass, DataMember * *curMember, DataMember * *subMemberStack, int *subMemberStackPos);
+extern __attribute__((dllimport)) Property * __ecereNameSpace__ecere__com__eClass_FindProperty(Class * _class, const char *name, Module module);
 extern __attribute__((dllimport)) int64 __ecereNameSpace__ecere__com__eClass_GetProperty(Class * _class, const char *name);
 extern __attribute__((dllimport)) bool __ecereNameSpace__ecere__com__eClass_IsDerived(Class * _class, Class * from);
 extern __attribute__((dllimport)) void __ecereNameSpace__ecere__com__eClass_Resize(Class * _class, int newSize);
 extern __attribute__((dllimport)) void __ecereNameSpace__ecere__com__eClass_SetProperty(Class * _class, const char *name, int64 value);
 extern __attribute__((dllimport)) void __ecereNameSpace__ecere__com__eClass_Unregister(Class * _class);
-
-extern __attribute__((dllimport)) Instance __ecereNameSpace__ecere__com__eInstance_New(Class * _class);
-extern __attribute__((dllimport)) Instance __ecereNameSpace__ecere__com__eInstance_NewEx(Class * _class, bool bindingsAlloc);
+extern __attribute__((dllimport)) void __ecereNameSpace__ecere__com__eEnum_AddFixedValue(Class * _class, const char *string, int64 value);
+extern __attribute__((dllimport)) int64 __ecereNameSpace__ecere__com__eEnum_AddValue(Class * _class, const char *string);
+extern __attribute__((dllimport)) void __ecereNameSpace__ecere__com__eInstance_DecRef(Instance instance);
 extern __attribute__((dllimport)) void __ecereNameSpace__ecere__com__eInstance_Delete(Instance instance);
 extern __attribute__((dllimport)) void __ecereNameSpace__ecere__com__eInstance_Evolve(Instance *instancePtr, Class * _class);
-extern __attribute__((dllimport)) void __ecereNameSpace__ecere__com__eInstance_SetMethod(Instance instance, constString name, void *function);
-extern __attribute__((dllimport)) void __ecereNameSpace__ecere__com__eInstance_DecRef(Instance instance);
 extern __attribute__((dllimport)) void __ecereNameSpace__ecere__com__eInstance_FireSelfWatchers(Instance instance, Property * _property);
 extern __attribute__((dllimport)) void __ecereNameSpace__ecere__com__eInstance_FireWatchers(Instance instance, Property * _property);
 extern __attribute__((dllimport)) void __ecereNameSpace__ecere__com__eInstance_IncRef(Instance instance);
 extern __attribute__((dllimport)) bool __ecereNameSpace__ecere__com__eInstance_IsDerived(Instance instance, Class * from);
+extern __attribute__((dllimport)) Instance __ecereNameSpace__ecere__com__eInstance_New(Class * _class);
+extern __attribute__((dllimport)) Instance __ecereNameSpace__ecere__com__eInstance_NewEx(Class * _class, bool bindingsAlloc);
+extern __attribute__((dllimport)) void __ecereNameSpace__ecere__com__eInstance_SetMethod(Instance instance, constString name, void *function);
 extern __attribute__((dllimport)) void __ecereNameSpace__ecere__com__eInstance_StopWatching(Instance instance, Property * _property, Instance object);
 extern __attribute__((dllimport)) void __ecereNameSpace__ecere__com__eInstance_Watch(Instance instance, Property * _property, void *object, void __ecereNameSpace__ecere__com__callback(void *, void *));
 extern __attribute__((dllimport)) void __ecereNameSpace__ecere__com__eInstance_WatchDestruction(Instance instance, Instance object, void __ecereNameSpace__ecere__com__callback(void *, void *));
-
-extern __attribute__((dllimport)) void __ecereNameSpace__ecere__com__eEnum_AddFixedValue(Class * _class, const char *string, int64 value);
-extern __attribute__((dllimport)) int64 __ecereNameSpace__ecere__com__eEnum_AddValue(Class * _class, const char *string);
-
 extern __attribute__((dllimport)) DataMember * __ecereNameSpace__ecere__com__eMember_AddDataMember(DataMember * member, const char *name, const char *type, uint size, uint alignment, AccessMode declMode);
 extern __attribute__((dllimport)) bool __ecereNameSpace__ecere__com__eMember_AddMember(DataMember * addTo, DataMember * dataMember);
 extern __attribute__((dllimport)) DataMember * __ecereNameSpace__ecere__com__eMember_New(DataMemberType type, AccessMode declMode);
-
+extern __attribute__((dllimport)) Module __ecereNameSpace__ecere__com__eModule_Load(Module fromModule, const char *name, AccessMode importAccess);
+extern __attribute__((dllimport)) Module __ecereNameSpace__ecere__com__eModule_LoadStatic(Module fromModule, const char *name, AccessMode importAccess, bool __ecereNameSpace__ecere__com__Load(Module module), bool __ecereNameSpace__ecere__com__Unload(Module module));
+extern __attribute__((dllimport)) Module __ecereNameSpace__ecere__com__eModule_LoadStrict(Module fromModule, const char *name, AccessMode importAccess);
+extern __attribute__((dllimport)) void __ecereNameSpace__ecere__com__eModule_Unload(Module fromModule, Module module);
 extern __attribute__((dllimport)) void __ecereNameSpace__ecere__com__eProperty_SelfWatch(Class * _class, const char *name, void (*__ecereNameSpace__ecere__com__callback)(void *));
 extern __attribute__((dllimport)) void __ecereNameSpace__ecere__com__eProperty_Watchable(Property * _property);
-
-extern __attribute__((dllimport)) void __ecereNameSpace__ecere__com__MemoryGuard_PopLoc(void);
-extern __attribute__((dllimport)) void __ecereNameSpace__ecere__com__MemoryGuard_PushLoc(const char *loc);
-
+extern __attribute__((dllimport)) void __ecereNameSpace__ecere__com__eSystem_Delete(void *memory);
+extern __attribute__((dllimport)) Class * __ecereNameSpace__ecere__com__eSystem_FindClass(Module module, const char *name);
+extern __attribute__((dllimport)) DefinedExpression * __ecereNameSpace__ecere__com__eSystem_FindDefine(Module module, const char *name);
+extern __attribute__((dllimport)) GlobalFunction * __ecereNameSpace__ecere__com__eSystem_FindFunction(Module module, const char *name);
+extern __attribute__((dllimport)) void * __ecereNameSpace__ecere__com__eSystem_New(uint size);
+extern __attribute__((dllimport)) void * __ecereNameSpace__ecere__com__eSystem_New0(uint size);
+extern __attribute__((dllimport)) Class * __ecereNameSpace__ecere__com__eSystem_RegisterClass(ClassType type, const char *name, const char *baseName, int size, int sizeClass, bool (*Constructor)(void *), void (*Destructor)(void *), Module module, AccessMode declMode, AccessMode inheritanceAccess);
+extern __attribute__((dllimport)) DefinedExpression * __ecereNameSpace__ecere__com__eSystem_RegisterDefine(const char *name, const char *value, Module module, AccessMode declMode);
+extern __attribute__((dllimport)) GlobalFunction * __ecereNameSpace__ecere__com__eSystem_RegisterFunction(const char *name, const char *type, void *func, Module module, AccessMode declMode);
+extern __attribute__((dllimport)) void *__ecereNameSpace__ecere__com__eSystem_Renew(void *memory, uint size);
+extern __attribute__((dllimport)) void *__ecereNameSpace__ecere__com__eSystem_Renew0(void *memory, uint size);
+extern __attribute__((dllimport)) void __ecereNameSpace__ecere__com__eSystem_SetArgs(Application app, int argc, char * argv[]);
+extern __attribute__((dllimport)) void __ecereNameSpace__ecere__com__eSystem_SetPoolingDisabled(bool disabled);
 extern __attribute__((dllimport)) constString __ecereNameSpace__ecere__GetTranslatedString(constString name, constString string, constString stringAndContext);
 extern __attribute__((dllimport)) void __ecereNameSpace__ecere__LoadTranslatedStrings(constString moduleName, constString name);
 extern __attribute__((dllimport)) void __ecereNameSpace__ecere__UnloadTranslatedStrings(constString name);
 
 extern Module __thisModule;
 
+
 // Global Functions
+
 extern void (*CheckConsistency)(void);
 extern void (*CheckMemory)(void);
 extern DesignerBase (*GetActiveDesigner)(void);
