@@ -32,20 +32,49 @@
       }
    ],
    "Files" : [
-      "bgen.ec",
       {
-         "FileName" : "out.c",
+         "Folder" : "generated",
+         "Files" : [
+            {
+               "Folder" : "new",
+               "Files" : [
+
+               ]
+            },
+            "./eC.c",
+            "./eC.h",
+            "./ecere.c",
+            "./ecere.h",
+            "./eda.c",
+            "./eda.h"
+         ],
          "Options" : {
             "ExcludeFromBuild" : true
          }
       },
-      "eC.h",
       {
-         "FileName" : "eC.c",
-         "Options" : {
-            "ExcludeFromBuild" : true
-         }
-      }
+         "Folder" : "bindings",
+         "Files" : [
+            {
+               "Folder" : "C",
+               "Files" : [
+                  "./cgen.ec",
+                  "./cgenh.ec",
+                  "./cgenc.ec"
+               ]
+            },
+            {
+               "Folder" : "C++",
+               "Files" : [
+                  "./cppgen.ec"
+               ]
+            }
+         ]
+      },
+      "bgen.ec",
+      "progress.txt",
+      "ecwalker.ec",
+      "oldgen.ec"
    ],
    "ResourcesPath" : "",
    "Resources" : [
