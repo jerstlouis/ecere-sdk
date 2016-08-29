@@ -17,6 +17,12 @@ public:
          readToken();
       return DeclarationInit { specifiers = specs, declarators = decls };
    }
+
+   ~ASTDeclaration()
+   {
+      // delete extStorage;
+      // delete symbol;
+   }
 }
 
 public class DeclarationInit : ASTDeclaration
@@ -34,6 +40,12 @@ public:
       }
       if(declarators) declarators.print();
       out.Print(";");
+   }
+
+   ~DeclarationInit()
+   {
+      delete specifiers;
+      delete declarators;
    }
 }
 
@@ -62,6 +74,11 @@ public:
          out.Print(";");
       }
    }
+
+   ~DeclarationInstance()
+   {
+      delete inst;
+   }
 }
 
 public class DeclarationDefine : ASTDeclaration
@@ -69,6 +86,12 @@ public class DeclarationDefine : ASTDeclaration
 public:
    ASTIdentifier id;
    ASTExpression exp;
+
+   ~DeclarationDefine()
+   {
+      delete id;
+      delete exp;
+   }
 }
 
 public class ASTFunctionDefinition : ASTNode
@@ -118,6 +141,15 @@ public:
    int tempCount;
    bool propertyNoThis; // Not used yet; might use to support both this = and return syntax for conversion properties
    */
+
+   ~ASTFunctionDefinition()
+   {
+      delete specifiers;
+      delete declarator;
+      if(oldStyleDeclarations) oldStyleDeclarations.Free();
+      delete oldStyleDeclarations;
+      delete body;
+   }
 };
 
 class ASTImport : ASTNode
@@ -128,6 +160,11 @@ class ASTImport : ASTNode
    {
       out.Print("import ");
       out.PrintLn(importString);
+   }
+
+   ~ASTImport()
+   {
+      delete importString;
    }
 }
 

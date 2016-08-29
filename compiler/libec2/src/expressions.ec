@@ -55,6 +55,11 @@ public:
       readToken();
       return { string = CopyString(token.text) };
    }
+
+   ~ASTIdentifier()
+   {
+      delete string;
+   }
 };
 
 public class ASTTypeName : ASTNode
@@ -78,6 +83,13 @@ public:
    {
       if(qualifiers) qualifiers.print();
       if(declarator) { if(qualifiers) out.Print(" "); declarator.print(); }
+   }
+
+   ~ASTTypeName()
+   {
+      delete qualifiers;
+      delete declarator;
+      delete bitCount;
    }
 };
 
@@ -294,6 +306,11 @@ public:
    {
       return (float)atof(constant);
    }
+
+   ~ExpConstant()
+   {
+      delete constant;
+   }
 }
 
 public class ExpString : ASTExpression
@@ -310,6 +327,11 @@ public:
    {
       return { string = CopyString(readToken().text) };
    }
+
+   ~ExpString()
+   {
+      delete string;
+   }
 }
 
 public class ExpIdentifier : ASTExpression
@@ -325,6 +347,11 @@ public:
    ExpIdentifier ::parse()
    {
       return { identifier = ASTIdentifier::parse() };
+   }
+
+   ~ExpIdentifier()
+   {
+      delete identifier;
    }
 }
 
@@ -371,6 +398,12 @@ public:
       }
       return 0;
    }
+
+   ~ExpOperation()
+   {
+      delete exp1;
+      delete exp2;
+   }
 }
 
 public class ExpAssignment : ExpOperation
@@ -400,6 +433,11 @@ public:
    float compute()
    {
       return (list && list.lastIterator.data) ? list.lastIterator.data.compute() : 0;
+   }
+
+   ~ExpBrackets()
+   {
+      delete list;
    }
 }
 
@@ -431,6 +469,13 @@ public:
       }
       return exp;
    }
+
+   ~ExpConditional()
+   {
+      delete condition;
+      delete expList;
+      delete elseExp;
+   }
 }
 
 public class ExpIndex : ASTExpression
@@ -456,6 +501,12 @@ public:
          readToken();
       return exp;
    }
+
+   ~ExpIndex()
+   {
+      delete exp;
+      delete index;
+   }
 }
 
 public class ExpMember : ASTExpression
@@ -478,6 +529,12 @@ public:
    {
       readToken();
       return { exp = e, member = ASTIdentifier::parse() };
+   }
+
+   ~ExpMember()
+   {
+      delete exp;
+      delete member;
    }
 }
 
@@ -523,6 +580,12 @@ public:
          readToken();
       return exp;
    }
+
+   ~ExpCall()
+   {
+      delete exp;
+      delete arguments;
+   }
 }
 
 public class ExpCast : ASTExpression
@@ -536,6 +599,12 @@ public:
       ASTExpression exp = parseUnaryExpression();
       // TODO: Deal with cast ambiguity
       return exp;
+   }
+
+   ~ExpCast()
+   {
+      delete typeName;
+      delete exp;
    }
 }
 
@@ -552,6 +621,11 @@ public:
    void print()
    {
       if(instance) instance.print();
+   }
+
+   ~ExpInstance()
+   {
+      delete instance;
    }
 }
 /*
@@ -665,6 +739,11 @@ public:
    {
       if(members) members.print();
    }
+
+   ~InstInitMember()
+   {
+      delete members;
+   }
 }
 
 public class InstInitFunction : InstanceInit
@@ -680,6 +759,11 @@ public:
    void print()
    {
       if(function) function.print();
+   }
+
+   ~InstInitFunction()
+   {
+      delete function;
    }
 }
 
@@ -792,5 +876,13 @@ public:
          printIndent();
       }
       out.Print("}");
+   }
+
+   ~ASTInstantiation()
+   {
+      delete _class;
+      delete exp;
+      delete members;
+      delete symbol;
    }
 };

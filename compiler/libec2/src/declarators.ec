@@ -24,6 +24,12 @@ public:
       }
       return ptr;
    }
+
+   ~ASTPointer()
+   {
+      delete qualifiers;
+      delete pointer;
+   }
 }
 
 public class ASTDeclarator : ASTNode
@@ -59,6 +65,11 @@ public:
          }
       }
       return decl;
+   }
+
+   ~ASTDeclarator()
+   {
+      delete declarator;
    }
 }
 
@@ -123,6 +134,11 @@ public:
          readToken();
       return decl;
    }
+
+   ~DeclFunction()
+   {
+      delete parameters;
+   }
 }
 
 public class DeclIdentifier : ASTDeclarator
@@ -138,6 +154,11 @@ public:
    DeclIdentifier ::parse()
    {
       return { identifier = ASTIdentifier::parse() };
+   }
+
+   ~DeclIdentifier()
+   {
+      delete identifier;
    }
 }
 
@@ -187,6 +208,12 @@ public:
       if(peekToken().type == ']') readToken();
       return decl;
    }
+
+   ~DeclArray()
+   {
+      delete exp;
+      // delete enumClass;
+   }
 }
 
 public class DeclPointer : ASTDeclarator
@@ -204,6 +231,11 @@ public:
    {
       return { pointer = ASTPointer::parse(), declarator = ASTDeclarator::parse() };
    }
+
+   ~DeclPointer()
+   {
+      delete pointer;
+   }
 }
 
 public class DeclStruct : ASTDeclarator
@@ -217,12 +249,24 @@ public:
    {
       return { declarator = ASTDeclarator::parse(); };
    }
+
+   ~DeclStruct()
+   {
+      delete exp;
+      delete posExp;
+      delete attrib;
+   }
 }
 
 public class DeclExtended : ASTDeclarator
 {
 public:
    ExtDecl extended;
+
+   ~DeclExtended()
+   {
+      delete extended;
+   }
 }
 
 public class ASTInitializer : ASTNode
@@ -259,6 +303,11 @@ public:
    {
       return InitExp { exp = ASTExpression::parse() };
    }
+
+   ~InitExp()
+   {
+      delete exp;
+   }
 };
 
 public class InitList : ASTInitializer
@@ -280,6 +329,12 @@ public:
    {
       ASTList<ASTInitializer> list = (ASTList<ASTInitializer>)ASTList::parse(class(ASTList<ASTInitializer>), ASTInitializer::parse, ',');
       return list ? { list = (void *)list } : null;
+   }
+
+   ~InitList()
+   {
+      if(list) list.Free();
+      delete list;
    }
 };
 
@@ -313,6 +368,12 @@ public:
          return { declarator = decl, initializer = init };
       }
       return null;
+   }
+
+   ~ASTInitDeclarator()
+   {
+      delete declarator;
+      delete initializer;
    }
 };
 

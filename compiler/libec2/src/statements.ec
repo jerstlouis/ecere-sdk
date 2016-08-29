@@ -7,6 +7,13 @@ public:
    ASTStatement compound;
    List<ASTIdentifier> properties;
    bool deleteWatch;
+
+   ~ASTPropertyWatch()
+   {
+      delete compound;
+      if(properties) properties.Free();
+      delete properties;
+   }
 };
 
 /*
@@ -133,6 +140,11 @@ public:
       }
       return null;
    }
+
+   ~StmtExpression()
+   {
+      delete expressions;
+   }
 }
 int indent;
 void printIndent()
@@ -238,6 +250,15 @@ public:
       }
       return stmt;
    }
+
+   ~StmtCompound()
+   {
+      if(declarations) declarations.Free();
+      delete declarations;
+      if(statements) statements.Free();
+      delete statements;
+      // delete context;
+   }
 }
 
 public class StmtIf : ASTStatement
@@ -290,6 +311,13 @@ public:
       }
       return stmt;
    }
+
+   ~StmtIf()
+   {
+      delete exp;
+      delete stmt;
+      delete elseStmt;
+   }
 }
 
 int caseIndent = -1;
@@ -328,6 +356,12 @@ public:
       }
       return stmt;
    }
+
+   ~StmtSwitch()
+   {
+      delete exp;
+      delete stmt;
+   }
 }
 
 public class StmtLabeled : ASTStatement
@@ -350,6 +384,12 @@ public:
          return StmtLabeled { id = id, stmt = ASTStatement::parse() };
       delete id;
       return null;
+   }
+
+   ~StmtLabeled()
+   {
+      delete id;
+      delete stmt;
    }
 }
 
@@ -390,6 +430,12 @@ public:
       }
       return stmt;
    }
+
+   ~StmtCase()
+   {
+      delete exp;
+      delete stmt;
+   }
 }
 
 public class StmtWhile : ASTStatement
@@ -410,6 +456,12 @@ public:
          stmt.stmt = ASTStatement::parse();
       }
       return stmt;
+   }
+
+   ~StmtWhile()
+   {
+      delete exp;
+      delete stmt;
    }
 }
 
@@ -436,6 +488,12 @@ public:
          if(peekToken().type == ';') readToken();
       }
       return stmt;
+   }
+
+   ~StmtDoWhile()
+   {
+      delete exp;
+      delete stmt;
    }
 }
 
@@ -491,6 +549,14 @@ public:
          }
       }
       return stmt;
+   }
+
+   ~StmtFor()
+   {
+      delete init;
+      delete check;
+      delete increment;
+      delete stmt;
    }
 }
 
@@ -549,6 +615,11 @@ public:
       if(peekToken().type == ';') readToken();
       return stmt;
    }
+
+   ~StmtReturn()
+   {
+      delete exp;
+   }
 }
 
 public class StmtGoto : ASTStatement
@@ -571,6 +642,11 @@ public:
       if(peekToken().type == ';') readToken();
       return stmt;
    }
+
+   ~StmtGoto()
+   {
+      delete id;
+   }
 }
 
 public class StmtAsm : ASTStatement
@@ -581,6 +657,18 @@ public:
    List<String> inputFields;
    List<String> outputFields;
    List<String> clobberedFields;
+
+   ~StmtAsm()
+   {
+      delete spec;
+      delete statements;
+      if(inputFields) inputFields.Free();
+      delete inputFields;
+      if(outputFields) outputFields.Free();
+      delete outputFields;
+      if(clobberedFields) clobberedFields.Free();
+      delete clobberedFields;
+   }
 }
 
 public class StmtWatch : ASTStatement
@@ -588,6 +676,14 @@ public class StmtWatch : ASTStatement
 public:
    ASTExpression watcher, object;
    List<ASTPropertyWatch> watches;
+
+   ~StmtWatch()
+   {
+      delete watcher;
+      delete object;
+      if(watches) watches.Free();
+      delete watches;
+   }
 }
 
 public class StmtFireWatch : ASTStatement
@@ -595,6 +691,14 @@ public class StmtFireWatch : ASTStatement
 public:
    ASTExpression watcher, object;
    List<ASTIdentifiers> watches;
+
+   ~StmtFireWatch()
+   {
+      delete watcher;
+      delete object;
+      if(watches) watches.Free();
+      delete watches;
+   }
 }
 
 public class StmtStopWatching : ASTStatement
@@ -602,6 +706,14 @@ public class StmtStopWatching : ASTStatement
 public:
    ASTExpression watcher, object;
    List<ASTIdentifiers> watches;
+
+   ~StmtStopWatching()
+   {
+      delete watcher;
+      delete object;
+      if(watches) watches.Free();
+      delete watches;
+   }
 }
 
 public class StmtForEach : ASTStatement
@@ -611,6 +723,14 @@ public:
    ExpList exp;
    ExpList filter;
    Statement stmt;
+
+   ~StmtForEach()
+   {
+      delete id;
+      delete exp;
+      delete filter;
+      delete stmt;
+   }
 }
 
 public class StmtDecl : ASTStatement
@@ -621,5 +741,10 @@ public:
    void print()
    {
       if(decl) { decl.print(); out.PrintLn(""); }
+   }
+
+   ~StmtDecl()
+   {
+      delete decl;
    }
 }

@@ -6,6 +6,12 @@ public:
    Location loc;
 
    virtual void print();
+
+   ~ASTNode()
+   {
+      if(this)
+         Free();
+   }
 }
 
 public class ASTList : ASTNode
@@ -29,7 +35,7 @@ public:
    IteratorPointer Find(D value)                          { return list ? list.Find((void *)value) : 0; }
    void FreeIterator(IteratorPointer it)                  { if(list) list.FreeIterator(it); }
    int GetCount()                                         { return list ? list.GetCount() : 0; }
-   void Free()                                            { if(list) list.Free(); }
+   void Free()                                            { /*if(list) list.Free();*/ }
    void Delete(IteratorPointer i)                         { if(list) list.Delete(i); }
 
 public:
@@ -71,7 +77,7 @@ public:
 
    ~ASTList()
    {
-      list.Free();
+      Free();
    }
 
    void topoSort()

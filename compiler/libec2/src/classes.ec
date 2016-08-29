@@ -59,6 +59,13 @@ public:
       if(initializer)
          initializer.print();
    }
+
+   ~ASTMemberInit()
+   {
+      if(identifiers) identifiers.Free();
+      delete identifiers;
+      delete initializer;
+   }
 };
 
 public class MemberInitList : ASTList<ASTMemberInit>
