@@ -85,24 +85,11 @@ enum WalkMode
    globalFunc,
    virtualMethodDefs,
    virtualMethodIDs,
-   dynamicBinding
+   dynamicBinding,
+   cleanup
 };
 
 define ecereNameSpace = "__ecereNameSpace__";
-const char * spaces = \
-      "                                                                " \
-      "                                                                " \
-      "                                                                " \
-      "                                                                " \
-      "                                                                " \
-      "                                                                " \
-      "                                                                " \
-      "                                                                ";
-
-const char * getColumnRemainSpaces(int colSize, int stringSize)
-{
-   return spaces + strlen(spaces) - Min(Max(0, colSize - stringSize), strlen(spaces));
-}
 
 Map<const String, const String> easyFuncNames
 {
@@ -235,7 +222,7 @@ static void walkNamespace(Module module, NameSpace mainNameSpace, NameSpace comN
                         char * fname = getNoNamespaceString(fn.name, null);
                         const char * easy = easyFuncNames[name];
                         if(easy)
-                           fH.PrintLn("#define ", easy, getColumnRemainSpaces(32, strlen(easy)), " ", name);
+                           fH.PrintLn("#define ", easy, spaces(32, strlen(easy)), " ", name);
                         else
                         {
                            strcpySubstring(fname, "eSystem", "eC");
@@ -259,7 +246,7 @@ static void walkNamespace(Module module, NameSpace mainNameSpace, NameSpace comN
                                  else
                                     PrintLn("");
                               }
-                              fH.PrintLn("#define ", s, getColumnRemainSpaces(32, strlen(s)), " ", name);
+                              fH.PrintLn("#define ", s, spaces(32, strlen(s)), " ", name);
                            }
                         }
                         delete fname;
@@ -431,128 +418,6 @@ static void walkNamespace(Module module, NameSpace mainNameSpace, NameSpace comN
    }
 }
 
-AVLTree<const String> skipFunctionTree { [
-   "acos",
-   "acosh",
-   "asin",
-   "asinh",
-   "atan",
-   "atan2",
-   "atanh",
-   "atof",
-   "atoi",
-   "ceil",
-   "cos",
-   "cosh",
-   "exp",
-   "fabs",
-   "floor",
-   "fmod",
-   "fputs",
-   "getenv",
-   "isalnum",
-   "isalpha",
-   "isblank",
-   "isdigit",
-   "islower",
-   "isprint",
-   "isspace",
-   "isupper",
-   "isxdigit",
-   "log",
-   "log10",
-   "memcmp",
-   "memcpy",
-   "memmove",
-   "memset",
-   "pow",
-   "printf",
-   "puts",
-   "qsort",
-   "rename",
-   "sin",
-   "sinh",
- //"sprintf",
-   "sprintf",
-   "sqrt",
-   "strcasecmp",
-   "strcat",
-   "strchr",
-   "strcmp",
-   "strcpy",
-   "strcspn",
-   "strlen",
-   "strlwr",
-   "strncasecmp",
-   "strncat",
-   "strncmp",
-   "strncpy",
-   "strpbrk",
-   "strspn",
-   "strstr",
-   "strtod",
-   "strtol",
-   "strtoll",
-   "strtoul",
-   "strtoull",
-   "strupr",
-   "system",
-   "tan",
-   "tanh",
-   "tolower",
-   "toupper",
-   "vsnprintf",
-   "vsprintf"
-] };
-
-static bool skipFunction(const char * name, const char * moduleName, NameSpace * ns)
-{
-   if(!moduleName && skipFunctionTree.Find(name))
-      return true;
-   if(islower(name[0]) && strstr(name, "eClass") != name && strstr(name, "eSystem") != name && strstr(name, "eEnum") != name &&
-          strstr(name, "eInstance") != name && strstr(name, "eMember") != name && strstr(name, "eModule") != name &&
-          strstr(name, "eProperty") != name)
-      PrintLn("SHOULD WE SKIP FUNCTION: ", name, moduleName ? " from " : "", moduleName ? moduleName : "",
-            (ns && ns->name) ? " / " : "", (ns && ns->name) ? ns->name : "");
-   return false;
-}
-
-AVLTree<const String> skipTypes { [
-   "char",
-   "char *",
-   "double",
-   "float",
-   "int",
-   "short",
-   "unsigned int",
-   "enum",
-   "struct",
-   "cclass"
-] };
-
-Map<const String, const String> sysTypeMap { [
-   { "String", "char *" },
-   { "byte", "uint8_t" },
-   { "int64", "int64_t" },
-   { "intptr", "intptr_t" },
-   { "intsize", "ssize_t" },
-   { "uint", "uint32_t" },
-   { "uint16", "uint16_t" },
-   { "uint32", "uint32_t" },
-   { "uint64", "uint64_t" },
-   { "uintptr", "uintptr_t" },
-   { "uintsize", "size_t" },
-   { "unichar", "uint32_t" }
-] };
-
-static const char * systemTypeSubst(const char * name, const char * dataTypeString)
-{
-   const char * subst = sysTypeMap[name];
-   return subst ? subst : dataTypeString;
-}
-
-//Map<String, String> listEnumDataTypes { };
-
 static void addTypedefToAST(const char * typeString, const char * name, ClassType type)
 {
    DeclarationInit declTypedef { };
@@ -598,7 +463,26 @@ static void walkClass(Module module, Class cl, char * nsName, bool showPrivate, 
 
    if(selection.classes)
    {
-      if(mode == classNameDef || mode == classNameUndef)
+      if(mode == cleanup)
+      {
+         for(md = (Method)cl.methods.first; md; md = (Method)((BTNode)md).next)
+         {
+            if(md.dataType)
+            {
+               FreeType(md.dataType);
+               /*if(md._class.symbol)
+                  FreeSymbol(md._class.symbol);*/
+            }
+         }
+         for(pt = (Property)cl.membersAndProperties.first; pt; pt = pt.next)
+         {
+            if(pt.dataType)
+               FreeType(pt.dataType);
+         }
+         if(cl.dataType)
+            FreeType(cl.dataType);
+      }
+      else if(mode == classNameDef || mode == classNameUndef)
       {
          /*if(
                (selection == normalClass && cl.type == normalClass) ||
@@ -630,7 +514,7 @@ static void walkClass(Module module, Class cl, char * nsName, bool showPrivate, 
                   {
                      if(mode == classNameDef)
                         fH.PrintLn(skip ? "// SKIPPED // " : "", "#define ", cl.name,
-                              getColumnRemainSpaces(skip ? 32-14 : 32, strlen(cl.name)), " eC_", cl.name);
+                              spaces(skip ? 32-14 : 32, strlen(cl.name)), " eC_", cl.name);
                      else // mode == classNameUndef
                         fH.PrintLn(skip ? "// SKIPPED // " : "", "#undef ", cl.name);
                   }
@@ -727,8 +611,7 @@ static void walkClass(Module module, Class cl, char * nsName, bool showPrivate, 
          {
             if(md.memberAccess == publicAccess/* || (md.memberAccess == privateAccess && showPrivate)*/ && md.type == virtualMethod)
             {
-               char * mname = CopyString(md.name);
-               *mname = (char)tolower(*mname);
+               char * mname = copyCamelCaseString(md.name);
                if(!md.dataType)
                   ProcessMethodType(md);
                //PrintLn(cl.name, "::", md.name, " - > ", md.dataTypeString);
@@ -777,8 +660,7 @@ static void walkClass(Module module, Class cl, char * nsName, bool showPrivate, 
                      assumeTypedObject = true;
                   if(assumeTypedObject)
                   {
-                     char * mname = CopyString(md.name);
-                     *mname = (char)tolower(*mname);
+                     char * mname = copyCamelCaseString(md.name);
                      /*if(!md.dataType)
                         ProcessMethodType(md);*/
                      haveContent = true;
@@ -799,32 +681,21 @@ static void walkClass(Module module, Class cl, char * nsName, bool showPrivate, 
             if(!pt.isProperty) continue;
             //if(pt.memberAccess == publicAccess || (pt.memberAccess == privateAccess && showPrivate))
             {
-               if(!pt.dataType)
-                  pt.dataType = ProcessTypeString(pt.dataTypeString, false);
-               // properties here?
-               // if(pt.isProperty)
+               if(!pt.dataType) pt.dataType = ProcessTypeString(pt.dataTypeString, false);
                if(mode == propertyImport)
                {
-                  char pname[4];
+                  char * pname = copySpecialSingleCharName(cl.name);
                   char typeString[8192];
                   bool structValue = false;
                   bool ptr = false;
                   typeString[0] = 0;
                   PrintType(pt.dataType, typeString, false, false);
-                  /*if(strcmp(typeString, pt.dataTypeString))
-                     PrintLn("fail");*/
-                  pname[0] = (char)tolower(cl.name[0]);
-                  if(pname[0] == 'v') pname[0] = 'x';
-                  pname[1] = 0;
+                  //if(strcmp(typeString, pt.dataTypeString)) PrintLn("fail");
                   fC.PrintLn("Property * property_", cl.name, "_", pt.name, ";");
                   fH.PrintLn("extern Property * property_", cl.name, "_", pt.name, ";");
                   switch(pt.dataType.kind)
                   {
-                     case intType:
-                     case floatType:
-                     case doubleType:
-                     case int64Type:
-                     //case pointerType:
+                     case intType: case floatType: case doubleType: case int64Type: //case pointerType:
                         break;
                      case subClassType:
                         strcpy(typeString, "Class");
@@ -833,40 +704,22 @@ static void walkClass(Module module, Class cl, char * nsName, bool showPrivate, 
                         typeString[0] = 0;
                         PrintType(cl.dataType, typeString, false, false);
                         break;
-                     case charType:
-                     case shortType:
-                     //case intType:
-                     //case int64Type:
-                     case longType:
-                     //case floatType:
-                     //case doubleType:
+                     case charType: case shortType: //case intType: case int64Type:
+                     case longType: //case floatType: case doubleType:
                         //break;
-                     case intPtrType:
-                     case intSizeType:
-                     case _BoolType:
+                     case intPtrType: case intSizeType: case _BoolType:
                         //break;
                      case enumType:
                         //break;
                      //case classType:
                         //break;
-                     case dummyType:
-                     //case subClassType:
-                     //case thisClassType:
+                     case dummyType: //case subClassType: case thisClassType:
                         //break;
                      case templateType:
                         //break;
-                     case voidType:
-                     case structType:
-                     case unionType:
-                     case functionType:
-                     case ellipsisType:
-                     case arrayType:
-                     case methodType:
-                     case vaListType:
-                     //case typedObjectType:
-                     //case anyObjectType:
-                     //case classPointerType:
-                     //case int128Type:
+                     case voidType: case structType: case unionType: case functionType:
+                     case ellipsisType: case arrayType: case methodType: case vaListType:
+                     //case typedObjectType: case anyObjectType: case classPointerType: case int128Type:
                         //break;
                         PrintLn("mi: how to handle all these property kinds?");
                         break;
@@ -891,9 +744,7 @@ static void walkClass(Module module, Class cl, char * nsName, bool showPrivate, 
                               case noHeadClass:
                                  ptr = true;
                                  break;
-                              case enumClass:
-                              case bitClass:
-                              case unitClass:
+                              case enumClass: case bitClass: case unitClass:
                               // unionClass: // Temporary only in firstPass
                               case systemClass:
                                  break;
@@ -915,13 +766,8 @@ static void walkClass(Module module, Class cl, char * nsName, bool showPrivate, 
                                  else
                                     PrintLn("tmp");
                                  break;
-                              case voidType:
-                              case shortType:
-                              case intType:
-                              case int64Type:
-                              case longType:
-                              case floatType:
-                              case doubleType:
+                              case voidType: case shortType: case intType: case int64Type:
+                              case longType: case floatType: case doubleType:
                                  break;
                               case pointerType: // typeString == "char * *" // is there a charType deeper in?
                                  PrintLn("tmp");
@@ -964,6 +810,7 @@ static void walkClass(Module module, Class cl, char * nsName, bool showPrivate, 
                   }
                   fC.PrintLn("");
                   fH.PrintLn("");
+                  delete pname;
                }
             }
          }
@@ -1111,7 +958,7 @@ static void walkClass(Module module, Class cl, char * nsName, bool showPrivate, 
    }
 }
 
-void printVirtualMethodDefs(Class cl, Method md, const char * mname, bool classClass, bool assumeTypedObject, bool forInstance)
+static void printVirtualMethodDefs(Class cl, Method md, const char * mname, bool classClass, bool assumeTypedObject, bool forInstance)
 {
    int charCount = 0;
    int ap;
@@ -1161,12 +1008,12 @@ void printVirtualMethodDefs(Class cl, Method md, const char * mname, bool classC
    }
    if(forInstance)
    {
-      fH.Print(")", getColumnRemainSpaces(64, charCount), "_", mname, "((i) ? (i)->_class : c, i");
+      fH.Print(")", spaces(64, charCount), "_", mname, "((i) ? (i)->_class : c, i");
    }
    else
    {
       fH.Print(") ");
-      fH.Print(getColumnRemainSpaces(64, charCount), "({ void (* method)(");
+      fH.Print(spaces(64, charCount), "({ void (* method)(");
       printParamsType(thisClassName, assumeTypedObject, md.dataType.params);
       fH.Print(") = (void (*)(");
       printParamsType(thisClassName, assumeTypedObject, md.dataType.params);
@@ -1199,7 +1046,7 @@ void printVirtualMethodDefs(Class cl, Method md, const char * mname, bool classC
       fH.PrintLn("); })");
 }
 
-void printParamsType(const char * thisClassName, bool assumeTypedObject, OldList params)
+static void printParamsType(const char * thisClassName, bool assumeTypedObject, OldList params)
 {
    Type param;
    bool prev = thisClassName || assumeTypedObject;
@@ -1370,223 +1217,6 @@ static DeclarationInit getGlobalFuncDeclWhatnotFromFunction(GlobalFunction fn)
    return decl;
 }
 
-static ASTClassDef getClassDefDeclFromMember(Property pt, bool privateData)
-{
-   ASTClassDef def = null;
-   TempFile f { };
-   char * n, * dataTypeString = (char*)pt.dataTypeString;
-   char string[512], marker, * s, * d;
-   while((n = strstr(dataTypeString, "::"))) dataTypeString = n+2;
-
-   if(!strcmp(dataTypeString, "T"))
-      PrintLn("stop");
-   if(pt.dataType.kind == classType &&
-         !(pt.dataType._class.registered && (pt.dataType._class.registered.type == structClass ||
-                  pt.dataType._class.registered.type == normalClass || pt.dataType._class.registered.type == enumClass)))
-      f.Print(dataTypeString, " * ", pt.name, ";");
-   else if(pt.dataType.kind == arrayType)
-   {
-      marker = '[';
-      for(s = dataTypeString, d = &string[0]; *s; s++)
-      {
-         if(*s == marker)
-         {
-            *d++ = ' ';
-            strcpy(d, pt.name);
-            d += strlen(pt.name);
-            marker = 0;
-         }
-         *d++ = *s;
-      }
-      *d = 0;
-      f.Print(string, ";");
-   }
-   else if(pt.dataType.kind == pointerType && pt.dataType.type.kind == functionType)
-   {
-      marker = '*';
-      for(s = dataTypeString, d = &string[0]; *s; s++)
-      {
-         *d++ = *s;
-         if(*s == marker)
-         {
-            strcpy(d, pt.name);
-            d += strlen(pt.name);
-            marker = 0;
-         }
-      }
-      *d = 0;
-      f.Print(string, ";");
-   }
-   else
-      f.Print(dataTypeString, " ", pt.name, ";");
-   initParser(f, null);
-   f.Seek(0, start);
-   def = ASTClassDef::parse();
-   if(!def)
-      PrintLn("warning: unable to get ASTClassDef from ASTClassDef::parse(\"", dataTypeString, " ", pt.name, ";", "\")");
-   delete f;
-   return def;
-}
-
-static char * getFunctionPointerDeclFromDataTypeString(const char * str)
-{
-   uint len = strlen(str);
-   char * output = new char[len+16];
-   char * o = output;
-   const char * i = str;
-   char * part = strstr(i, "dllexport ");
-   uint t;
-   for(t = 0; t <= len; t++)
-      output[t] = 0;
-   if(part == i)
-      i += 10;
-   part = strstr(i, "(");
-   if(part)
-   {
-      int n;
-      for(n = part - i - 1; n >= 0 && (isalpha(i[n]) || i[n] == '_' || isdigit(i[n]))/*!isspace(i[n])*/; n--)
-         ;
-      n++;
-      strncpy(o, i, n);
-      i += n;
-      o += n;
-      strcpy(o, "(*");
-      o += 2;
-      n = part - i;
-      strncpy(o, i, n);
-      i = part;
-      o += n;
-      strcpy(o, ")");
-      o += 1;
-      strcpy(o, part);
-      o += strlen(part);
-   }
-   else
-      PrintLn("error");
-   *o = 0;
-   return output;
-}
-
-static char * getFuncTypeString(const char * str)
-{
-   const char * _typed_object_object = "typed_object object";
-   const char * _class_class_object_object = "Class class_object, void * object";
-   char * out = getNoNamespaceString(str, null);
-   char * next;
-   while((next = strstr(out, _typed_object_object)))
-   {
-      char * tmp = out;
-      *next = 0;
-      next += strlen(_typed_object_object);
-      out = new char[strlen(tmp) + strlen(_class_class_object_object) + strlen(next) + 1];
-      *out = 0;
-      strcat(out, tmp);
-      strcat(out, _class_class_object_object);
-      strcat(out, next);
-      delete tmp;
-   }
-   return out;
-}
-
-static char * getNoNamespaceString(const char * str, char * buffer)
-{
-   uint len = strlen(str);
-   char * output = buffer ? buffer : new char[len+1];
-   char * o = output;
-   const char * i = str;
-   /*uint t;
-   for(t = 0; t <= len; t++)
-      output[t] = 0;*/
-   while(*i)
-   {
-      uint kl; // keep length
-      uint dl; // discard length
-      char * part = strstr(i, "::");
-      if(part)
-      {
-         int n;
-         dl = part - i + 2;
-         for(n = part - i - 1; n >= 0 && (isalpha(i[n]) || i[n] == '_' || isdigit(i[n]))/*!isspace(i[n])*/; n--)
-            ;
-         /*{
-            PrintLn("");
-         }*/
-         kl = n + 1;
-         for(n = dl; i[n] && (isalpha(i[n]) || i[n] == '_' || isdigit(i[n]) || i[n] == ':'); n++)
-         {
-            if(i[n] == ':')
-            {
-               if(i[n+1] == ':' && (isalpha(i[n+2]) || i[n+2] == '_'))
-               {
-                  n++;
-                  dl = n+1;
-               }
-               else
-               {
-                  PrintLn("dD");
-                  break;
-               }
-            }
-         }
-      }
-      else
-      {
-         kl = dl = strlen(i);
-      }
-      if(kl)
-      {
-         strncpy(o, i, kl);
-         o += kl;
-      }
-      i += dl;
-      if(!part)
-         break;
-   }
-   *o = 0;
-   return output;
-}
-
-static char * strcpySubstring(char * string, const char * substring, const char * replace)
-{
-   char * b, * d;
-   const char * s, * r;
-   //if(strlen(substring) >= strlen(replace)
-   b = strstr(string, substring);
-   if(b)
-   {
-      for(s = substring, r = replace, d = b; *b; b++)
-      {
-         if(*r && *s)
-         {
-            *d++ = *r;
-            s++;
-            r++;
-         }
-         else if(*s)
-            s++;
-         else
-            *d++ = *b;
-      }
-      *d = 0;
-   }
-   return string;
-}
-
-char * getMangledFunctionName(const char * functionName)
-{
-   int c, len;
-   char * name = new char[MAX_FILENAME];
-   name[0] = 0;
-   strcat(name, ecereNameSpace);
-   strcat(name, functionName);
-   len = strlen(name);
-   for(c = strlen(ecereNameSpace); c < len; c++)
-   {
-      if(name[c] == ':') name[c] = '_';
-   }
-   return name;
-}
-
 void processModule(const char * moduleName, const char * moduleNameAllCaps, bool ecereCOM)
 {
    CBindingsGenerator cgen { bindingName, moduleName, moduleNameAllCaps, ecereCOM };
@@ -1595,7 +1225,6 @@ void processModule(const char * moduleName, const char * moduleNameAllCaps, bool
    fC.PrintLn("");
 
    writeHardCodedHeader(fH, cgen);
-   delete cgen;
 
       PrintLn(" *** Classes");
    fH.PrintLn("\n// Classes\n");
@@ -1629,6 +1258,7 @@ void processModule(const char * moduleName, const char * moduleNameAllCaps, bool
    walkModule(mod, false, virtualMethods, virtualMethodDefs, true);
    fH.PrintLn("");
 
+#if 0
       PrintLn(" *** Types");
    fH.PrintLn("\n// Types\n");
    walkModule(mod, false, typedefs, normal, true);
@@ -1662,6 +1292,7 @@ void processModule(const char * moduleName, const char * moduleNameAllCaps, bool
    walkModule(mod, false, virtualMethods, virtualMethodIDs, true);
    fC.PrintLn("");
    fH.PrintLn("");
+#endif // 0
 
    //fH.PrintLn("");
    //writeHardCodedEcereComFooter(fH);
@@ -1676,6 +1307,7 @@ void processModule(const char * moduleName, const char * moduleNameAllCaps, bool
    fH.PrintLn("");
    fH.PrintLn("#endif");
 
+#if 0
    walkModule(mod, false, functions, globalFunc, false);
 
    //PrintLn("listEnumDataTypes:");
@@ -1709,25 +1341,33 @@ void processModule(const char * moduleName, const char * moduleNameAllCaps, bool
    fC.PrintLn("}");
    fC.PrintLn("");
    fC.PrintLn("Module __thisModule;");
+#endif // 0
+
+   FreeTypeData(mod);
+   walkModule(mod, false, allClasses, cleanup, true);
+   delete cgen;
 }
 
 const char * bindingName;
 bool prepForBindingsGeneration(const char * name)
 {
    char fileName[MAX_FILENAME];
-   bindingName = name;
-   strcpy(fileName, name);
-   ChangeExtension(fileName, "c", fileName);
-   fC = FileOpen(fileName, write);
-   ChangeExtension(fileName, "h", fileName);
-   fH = FileOpen(fileName, write);
-   if(fC && fH)
+   if(readyGeneratedDir(fileName, true))
    {
-      astC = { };
-      astH = { };
-      //Platform os = __runtimePlatform;
-      ec1init();
-      return true;
+      bindingName = name;
+      PathCatSlash(fileName, name);
+      ChangeExtension(fileName, "c", fileName);
+      fC = FileOpen(fileName, write);
+      ChangeExtension(fileName, "h", fileName);
+      fH = FileOpen(fileName, write);
+      if(fC && fH)
+      {
+         astC = { };
+         astH = { };
+         //Platform os = __runtimePlatform;
+         ec1init(null);
+         return true;
+      }
    }
    return false;
 }
@@ -1736,7 +1376,9 @@ void terminateBindingsGeneration()
 {
    delete fC;
    delete fH;
+   if(astC) astC.Free();
    delete astC;
+   if(astH) astH.Free();
    delete astH;
    ec1terminate();
 }

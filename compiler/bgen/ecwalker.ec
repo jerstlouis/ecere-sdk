@@ -10,7 +10,8 @@ static OldList excludedSymbols { offset = (uint)(uintptr)&((Symbol)0).left };
 Application componentsApp;
 Module homeModule;
 
-void ec1init()
+bool ec1 = false;
+void ec1init(const char * pathToModule)
 {
    SetGlobalContext(globalContext);
    SetExcludedSymbols(&excludedSymbols);
@@ -18,18 +19,25 @@ void ec1init()
    SetImports(&imports);
    SetInDocumentor(true);
    SetGlobalData(globalData);
+   if(pathToModule)
+      openModule(pathToModule);
+   ec1 = true;
 }
 
 void ec1terminate()
 {
-   FreeContext(globalContext);
-   FreeExcludedSymbols(excludedSymbols);
-   ::defines.Free(FreeModuleDefine);
-   imports.Free(FreeModuleImport);
-   FreeGlobalData(globalData);
-   FreeTypeData(componentsApp);
-   FreeIncludeFiles();
-   delete componentsApp;
+   if(ec1)
+   {
+      FreeContext(globalContext);
+      FreeExcludedSymbols(excludedSymbols);
+      ::defines.Free(FreeModuleDefine);
+      imports.Free(FreeModuleImport);
+      FreeGlobalData(globalData);
+      FreeIncludeFiles();
+      if(componentsApp) FreeTypeData(componentsApp);
+      /*delete */componentsApp = null;
+      ec1 = false;
+   }
 }
 
 void openModule(const char * filePath)
@@ -39,17 +47,21 @@ void openModule(const char * filePath)
    Module module = null;
    static char symbolsDir[MAX_LOCATION];
 
-   FreeContext(globalContext);
-   FreeExcludedSymbols(excludedSymbols);
-   ::defines.Free(FreeModuleDefine);
-   imports.Free(FreeModuleImport);
-   FreeGlobalData(globalData);
-   FreeIncludeFiles();
-   if(componentsApp)
-   {
-      FreeTypeData(componentsApp);
-      delete componentsApp;
-   }
+//#if 0 // removing this is causing the following line to show up in eC.h's classes defines section
+      //           #define Window eC_Window
+      FreeContext(globalContext);
+      FreeExcludedSymbols(excludedSymbols);
+      ::defines.Free(FreeModuleDefine);
+      imports.Free(FreeModuleImport);
+      FreeGlobalData(globalData);
+      FreeIncludeFiles();
+      if(componentsApp)
+      {
+         FreeTypeData(componentsApp);
+         delete componentsApp;
+      }
+//#endif // 0
+   ec1terminate();
 
    componentsApp = __ecere_COM_Initialize(false, 1, null);
    SetPrivateModule(componentsApp);
@@ -64,25 +76,6 @@ void openModule(const char * filePath)
    if(extension[0] && strcmpi(extension, "so") && strcmpi(extension, "dll") && strcmpi(extension, "dylib"))
       componentsApp.name = CopyString(filePath);
 
-   PrintLn("");
-   PrintLn("||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||");
-   PrintLn("||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||");
-   PrintLn("||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||");
-   PrintLn("");
-   PrintLn("openModule(", filePath, "|", componentsApp.name, ")");
-   for(module = componentsApp.allModules.first; module; module = module.next)
-   {
-      PrintLn("   module(", module.importType, "): ", module.name);
-      //if(module.modules.first)
-      {
-         //Module m = null;
-         //for(m = module.modules.first; m; m = m.next)
-         {
-            // crashing // PrintLn("       submodule(", m.importType, "): ", m.name);
-         }
-      }
-   }
-   PrintLn("");
    for(module = componentsApp.allModules.first; module; module = module.next)
    {
       if(module.name && (!strcmp(module.name, "ecere") || !strcmp(module.name, "ecereCOM")))
@@ -91,6 +84,25 @@ void openModule(const char * filePath)
    if(!module)
       eModule_LoadStrict(componentsApp, "ecereCOM", publicAccess /*privateAccess*/);
 
+   /*PrintLn("");
+   PrintLn("||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||");
+   PrintLn("||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||");
+   PrintLn("||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||||");
+   PrintLn("");
+   PrintLn("openModule(", filePath, "|", componentsApp.name, ")");
+   for(module = componentsApp.allModules.first; module; module = module.next)
+   {
+      PrintLn("   module(", module.importType, "): ", module.name);
+      if(module.modules.first)
+      {
+         Module m = null;
+         for(m = module.modules.first; m; m = m.next)
+         {
+            // crashing m.name == 0xecececec // PrintLn("       submodule(", m.importType, "): ", m.name);
+         }
+      }
+   }
+   PrintLn("");*/
    GetLastDirectory(filePath, moduleName);
    PrintLn("   moduleName: ", moduleName);
    // Extension, path and lib prefix get removed in Module::name
@@ -132,6 +144,7 @@ class eC_RTTI_Walker
    virtual void onDefine(DefinedExpression df, NameSpace space, const char * name, Module module);
    virtual void onFunction(GlobalFunction fn, NameSpace space, const char * name, Module module);
    virtual void onClass(Class cl, NameSpace space, const char * name, Module module);
+   virtual void endClass(Class cl, NameSpace space, const char * name, Module module);
    virtual void onMethod(Method md, Class cl, NameSpace space, const char * name, Module module);
    virtual void onMember(Property pt, Class cl, NameSpace space, const char * name, Module module);
    //virtual void onProperty(Property pt, Class cl, NameSpace space, const char * name, Module module);
@@ -221,6 +234,7 @@ class eC_RTTI_Walker
                   onConversion(pt, cl, space, nname, module);
                }
             }
+            endClass(cl, space, nname, module);
          }
       }
       if(inSubNamespaces)

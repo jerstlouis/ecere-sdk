@@ -29,6 +29,18 @@
             "Optimization" : "Speed",
             "FastMath" : true
          }
+      },
+      {
+         "Name" : "MemoryGuard",
+         "Options" : {
+            "Debug" : true,
+            "MemoryGuard" : true,
+            "Optimization" : "None",
+            "PreprocessorDefinitions" : [
+               "_DEBUG"
+            ],
+            "FastMath" : false
+         }
       }
    ],
    "Files" : [
@@ -38,15 +50,26 @@
             {
                "Folder" : "new",
                "Files" : [
-
+                  "eC.c",
+                  "eC.h",
+                  "ecere.c",
+                  "ecere.h",
+                  "eda.c",
+                  "eda.h"
                ]
             },
-            "./eC.c",
-            "./eC.h",
-            "./ecere.c",
-            "./ecere.h",
-            "./eda.c",
-            "./eda.h"
+            {
+               "Folder" : "old",
+               "Files" : [
+                  "eC.c",
+                  "eC.h",
+                  "ecere.c",
+                  "ecere.h",
+                  "eda.c",
+                  "eda.h",
+                  "out.c"
+               ]
+            }
          ],
          "Options" : {
             "ExcludeFromBuild" : true
